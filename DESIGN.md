@@ -1,36 +1,20 @@
 ---
-name: Court Type
-description: Charcoal and coral basketball editorial, inspired by the supplied Top.5 sports reference.
+name: Court Type — NBA Era direction
+description: Near-black sports editorial with coral type, monochrome basketball photography, and compact scouting-report UI.
 colors:
-  charcoal: "#202020"
-  white: "#f5f4f1"
-  coral: "#ff5964"
-  coral-hover: "#ff7e86"
-  muted: "#b2b0ad"
-  line: "#494949"
-  surface: "#292929"
-  selected: "#323232"
-  choice-border: "#555555"
-  court-lines: "#686868"
-  marker-border: "#747474"
-  header-rule: "#898886"
-  indicator: "#92908d"
+  ink: "#0d0d0d"
+  band: "#141414"
+  tile: "#1a1a1a"
+  raised: "#232323"
+  coral: "#f0485c"
+  coral-pressed: "#d93a4e"
+  white: "#ffffff"
+  body: "#b4b4b4"
+  muted: "#7c7c7c"
 typography:
-  display:
-    fontFamily: "DM Sans, sans-serif"
-    fontWeight: 700
-    fontSize: "clamp(64px, 7.4vw, 106px)"
-    lineHeight: 0.97
-    letterSpacing: "-0.04em"
-  question:
-    fontFamily: "DM Sans, sans-serif"
-    fontWeight: 600
-    fontSize: "clamp(32px, 3.6vw, 54px)"
-    lineHeight: 1.1
-  body:
-    fontFamily: "DM Sans, sans-serif"
-    fontSize: "17px"
-    lineHeight: 1.7
+  display: "Archivo, sans-serif"
+  body: "Barlow, sans-serif"
+  data: "IBM Plex Mono, monospace"
 rounded:
   square: "0px"
   circle: "50%"
@@ -38,28 +22,18 @@ rounded:
 
 # Court Type design system
 
-The supplied Top.5 reference sets the visual direction: a continuous charcoal canvas, warm white headings, restrained coral emphasis, monochrome athletic photography, generous space, and thin rules. The basketball quiz retains its content, scoring, and three-screen flow.
+The user-supplied `NBA Era System Redesign.zip` provides the visual source: the `Court Type.dc.html` screen design, token files, and image assets. The archive's design-system README describes a different NBA analytics product; its styling is useful here, but its product claims are not Court Type requirements.
 
-## Palette
+## Visual language
 
-Use charcoal (#202020) on all screens and warm white (#f5f4f1) for primary text. Coral (#ff5964) identifies actions, the current play, the result code, and selected answers. Supporting text uses #b2b0ad. Keep large regions neutral; the result code is coral lettering rather than a filled color panel.
+Use the exported near-black stack, one coral accent, white display text, quiet grey body text, flat surfaces, and thin rules. Archivo carries headlines and the wordmark; Barlow carries reading text and controls; IBM Plex Mono carries counts and labels. Corners stay square except circled numbers. Athlete photography is monochrome and shaded to keep copy legible. The imported basketball glyph and favicon are used directly.
 
-Rows use #292929 at rest and #323232 on hover or selection. Borders use #494949 for structural separation and #555555 for answer controls. The header and final result rule use #898886. Primary button hover uses #ff7e86. Keyboard focus uses a visible coral outline with an offset.
+## Screens
 
-## Typography
+The landing page opens with a full-bleed photographic hero, large two-line question, coral action, and a five-card instincts section. The quiz uses the exported 28/72 scouting-report split, selected answer rows, and an explicit Next control. The result uses the exported 36/64 split, coral type code, strengths, axis summary, copy-link action, and restart action.
 
-DM Sans supplies both display and reading text. Headings use sentence case, weights 600–700, tight tracking, and open line spacing compared with the previous condensed uppercase treatment. The landing heading scales from 64 to 106px on desktop and 51 to 84px on mobile. Quiz questions scale from 32 to 54px. Body text is 15–17px with generous line height. Small uppercase labels remain for supporting navigation, counters, and report metadata.
+The imported export demonstrates 12 questions, four axes, and 16 results. Court Type retains its existing product model: 45 questions across five axes, 32 results, curated descriptions, and slug-based share links. Counts and labels in the adapted UI reflect that model.
 
-## Layout and imagery
+## Responsive and interaction
 
-A shared shell has a 1600px maximum width and 5–6% horizontal gutters. The landing hero places copy beside the existing basketball photograph. CSS grayscale, edge fading, and top/bottom shading integrate the photo into the charcoal canvas; the original asset remains unchanged. The image is absolutely positioned inside its panel so its intrinsic size cannot stretch the hero.
-
-The desktop quiz uses a 28/72 split with the current play and court diagram in the left column. Results use a 36/64 split with coral type code on the left and the named profile on the right. Thin rules and open lists organize the result details.
-
-At 700px and below, columns stack, the decorative quiz diagram is hidden, and text and controls adjust for narrow screens. The landing photograph gets a 380px panel below the copy. Essential answer and navigation controls remain visible and usable.
-
-## Interaction
-
-Buttons and answer rows remain square and flat. Circular A/B labels and selection indicators echo the reference's compact numbered circles. Hover changes fill and border; selection adds the coral border and filled indicator. Native progress, focus, selection, and scrollbar colors follow the palette. Reduced motion removes transitions and smooth scrolling.
-
-Keep the quiz questions, result descriptions, scoring, URL sharing, and restart behavior unchanged when refining presentation.
+At 700px and below, quiz and result columns stack; controls stay in reach and the instinct cards reduce to two columns. Focus outlines use coral. Selected answers are visible by color and border, and the Next control stays disabled until an answer is chosen. Reduced-motion preference removes transitions and smooth scrolling.
