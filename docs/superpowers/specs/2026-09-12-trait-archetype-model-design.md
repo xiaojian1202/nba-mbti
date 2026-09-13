@@ -130,13 +130,12 @@ visible in full.
 |---|---|---|
 | `name` | all tiers | The archetype. Pure and authored are written; composed is assembled. |
 | `slug` | all tiers | URL key, unique across all 72 |
-| `tagline` | pure, authored | Three hand-written descriptors |
+| `tagline` | all tiers | Three descriptors: hand-written for pure and authored, drawn from the two traits' descriptor pools for composed |
 | `role` | all tiers | One-line functional summary |
-| `description` | pure, authored | Two to three sentences on how this player wins |
-| `strengths` | pure, authored | Exactly three short phrases |
+| `description` | all tiers | Two to three sentences on how this player wins; assembled from trait copy for composed |
+| `strengths` | all tiers | Exactly three short phrases; one per trait plus one from the role for composed |
 
-Composed profiles derive `tagline`, `description`, and `strengths` from their two
-traits' own descriptor pools rather than leaving fields empty. Composed copy is
+Every tier fills every field, so the result page never renders an empty slot. Composed copy is
 the weakest writing in the system by construction and cannot be made otherwise;
 two mitigations apply. The ~30 authored pairs are chosen to cover the
 combinations players are most likely to reach, and the nine modifier words are
