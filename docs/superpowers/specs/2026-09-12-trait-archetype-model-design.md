@@ -28,7 +28,9 @@ pairs: shooting, driving, and passing are three things, not two poles.
 Nine independently scored traits grouped into four functional roles. Identity is
 the ordered pair of a player's two strongest traits, resolved through three tiers
 — pure, authored, composed — so common archetypes are hand-written and complete
-while rare combinations still produce a coherent, gapless result. Tempo and
+while rare combinations still produce a coherent, gapless result. Every trait is
+additionally reported at a fixed proficiency level, so a result says how good this
+player is at each skill and not only which skills rank highest. Tempo and
 Temper survive as displayed modifiers that colour a result without selecting it.
 
 Roles are functions, not positions. Nothing in the model knows or asserts a
@@ -68,7 +70,7 @@ per name.
 
 ## Scoring
 
-Scoring runs in four steps over a complete answer set. As today, an incomplete or
+Scoring runs in five steps over a complete answer set. As today, an incomplete or
 invalid answer set scores `null`.
 
 **1. Trait scores.** Each of the 27 trait questions offers four options, each
@@ -91,11 +93,29 @@ Ranking ties are broken deterministically — first by the strength of the trait
 role, then by a fixed canonical trait order — so identical answers always yield an
 identical result.
 
-**4. Tier.** The (primary, secondary) pair resolves through three tiers:
+**4. Proficiency.** Every trait score is also mapped to a proficiency level — a
+plain statement of how good this player is at that skill. Levels are fixed bands
+over the theoretical 0–12 range, identical for all nine traits:
+
+| Score | Proficiency |
+|---|---|
+| 0–5 | Average |
+| 6–7 | Above Average |
+| 8–9 | Strong |
+| 10–11 | Excellent |
+| 12 | Elite |
+
+Proficiency is absolute, not relative. It answers "can this player shoot?" rather
+than "is shooting the best thing this player does?", which the primary/secondary
+ranking already answers. The two are independent and both are shown: a player
+whose every trait lands in Average still has a primary, and a player with three
+Excellent traits still has only one.
+
+**5. Tier.** The (primary, secondary) pair resolves through three tiers:
 
 | Tier | Condition | Source of identity |
 |---|---|---|
-| **Pure** | primary − secondary ≥ `PURE_GAP` | One of nine authored single-trait profiles |
+| **Pure** | primary is Elite or Excellent | One of nine authored single-trait profiles |
 | **Authored** | pair appears in the curated table | A fully hand-written profile |
 | **Composed** | otherwise | `modifier[secondary] + base[primary]` |
 
@@ -103,10 +123,12 @@ Nine base names and nine modifier words cover all 72 ordered pairs, so no
 combination is ever without a result. Roughly 30 pairs are authored; the balance
 compose.
 
-`PURE_GAP` is provisionally 4 out of a possible 12. It is a guess and must be a
-named constant, tuned once real questions exist. If almost no answer set reaches
-it the tier is decorative and should be lowered or removed; that judgement cannot
-be made before the questions are written.
+The pure tier keys off proficiency rather than off the gap between primary and
+secondary. A gap test conflates two different things: a specialist scoring 12/10
+is genuinely elite at one skill and fails a gap test, while a weak generalist
+scoring 6/2 passes one. The question the pure tier is asking is whether this
+player is outstanding at their best skill, and the proficiency band answers it
+directly. This replaces the provisional `PURE_GAP` constant, which is removed.
 
 ## Identity and Presentation
 
@@ -116,13 +138,16 @@ Each result page renders, top to bottom:
 2. **Archetype name** — "The Sniper", "The Blue-Collar Sniper", "The Wall".
 3. **Tagline** — three descriptors.
 4. **Description and exactly three strengths.**
-5. **Trait scorecard** — all nine traits as ranked bars.
+5. **Trait scorecard** — all nine traits as ranked bars, each labelled with its
+   proficiency level.
 6. **Tempo and Temper** — one line each.
 
 The scorecard is what repairs the forced-dichotomy defect. A player whose profile
 is genuinely balanced sees its shape rather than a coin flip reported as a
 verdict, and the axis information that majority voting used to discard is now
-visible in full.
+visible in full. Proficiency labels make the bars readable without a reference
+point: a bar is long or short relative to its neighbours, but "Excellent" states
+what the length means on its own.
 
 ### Profile fields
 
@@ -192,12 +217,12 @@ remains available, both unchanged from current behavior.
 
 | File | Change |
 |---|---|
-| `src/traits.js` *(new)* | The nine traits, four roles, two modifiers, and the canonical trait order used for tie-breaks. |
+| `src/traits.js` *(new)* | The nine traits, four roles, two modifiers, the canonical trait order used for tie-breaks, and the proficiency bands. |
 | `src/archetypes.js` *(new)* | Nine pure profiles, ~30 authored pairs, nine base names, nine modifier words, and `buildArchetype(primary, secondary)` resolving all 72 pairs through the three tiers. |
 | `src/questions.js` | Rewritten: 27 four-option trait questions and 10 binary modifier questions. |
-| `src/quiz.js` | `scoreAnswers` returns a profile object — trait scores, role strengths, role, primary, secondary, tier, archetype, tempo, temper — instead of a letter code. The axis table is replaced by the trait and role model. |
-| `src/app.js` | Four-option question rendering; role band, archetype, nine-bar scorecard, and modifier lines on the result; slug routing over the archetype table; question counts. |
-| `src/styles.css` | Four-option layout and the nine-bar scorecard. |
+| `src/quiz.js` | `scoreAnswers` returns a profile object — trait scores, per-trait proficiency, role strengths, role, primary, secondary, tier, archetype, tempo, temper — instead of a letter code. The axis table is replaced by the trait and role model. |
+| `src/app.js` | Four-option question rendering; role band, archetype, nine-bar scorecard with proficiency labels, and modifier lines on the result; slug routing over the archetype table; question counts. |
+| `src/styles.css` | Four-option layout and the nine-bar scorecard with proficiency labels. |
 | `tests/quiz.test.js` | Rewritten, see Testing. |
 | `tests/app.test.js` | Updated for slug routing and result composition. |
 | `PRODUCT.md`, `README.md` | 45 → 37 questions, five axes → nine traits and four roles, 32 results → 72 archetypes, timing revised. |
@@ -216,18 +241,30 @@ remains available, both unchanged from current behavior.
    regression test for the asymmetry the mean exists to neutralize.
 7. All 72 ordered pairs resolve to a profile with a non-empty name, and all 72
    slugs are unique.
-8. Tier selection is correct at its boundaries: a gap of exactly `PURE_GAP`
-   resolves pure and a gap one below it does not; a curated pair resolves
-   authored; an uncurated pair below the gap resolves composed.
-9. Ranking ties resolve deterministically — the same answers always produce the
+8. Proficiency bands are correct at their boundaries: 5 is Average and 6 is Above
+   Average, 7/8 and 9/10 divide likewise, and only 12 is Elite.
+9. Every trait can reach 12. For each of the nine traits there exists a
+   constructible answer set scoring it 12, proving no trait is structurally
+   capped below the top proficiency band by the question set.
+10. Tier selection is correct at its boundaries: a primary of 10 resolves pure and
+   a primary of 9 does not; a curated pair below that resolves authored; an
+   uncurated pair below it resolves composed.
+11. Ranking ties resolve deterministically — the same answers always produce the
    same archetype.
-10. Every slug round-trips: resolving a profile's slug returns that profile.
-11. Every authored and pure profile has a tagline, a description, and exactly
+12. Every slug round-trips: resolving a profile's slug returns that profile.
+13. Every authored and pure profile has a tagline, a description, and exactly
     three strengths.
 
 ## Open Items
 
-- `PURE_GAP` is provisional and must be tuned against the finished question set.
+- Proficiency bands assume the nine traits are equally *attractive* to answer,
+  not merely equally *frequent*. Count balance is enforced (12 questions each),
+  but if one trait's options consistently read as the more appealing choice, its
+  scores will skew high and its bands will mean something different from every
+  other trait's. Authoring must therefore extend the existing "no option may read
+  as the wrong answer" constraint with "no option may read as the dull one", and
+  a trait that no plausible answer set pushes into Excellent is evidence of a
+  lopsided question set to be fixed in `questions.js`, not of a mis-set band.
 - The ~30 authored pairs are not yet chosen. Selection should follow the
   combinations most likely to be reached, which is only knowable once the
   questions exist.
