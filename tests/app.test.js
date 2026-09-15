@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { questions, results } from '../src/quiz.js';
+import { items } from '../src/quiz.js';
+import { ARCHETYPES } from '../src/archetypes.js';
 
 async function mount(search = '') {
   const original = { document: globalThis.document, window: globalThis.window };
@@ -20,47 +21,67 @@ async function mount(search = '') {
   return {
     root,
     get href() { return href; },
-    async choose(value) { await root.click({ target: { closest: (selector) => selector === '[data-choice]' ? { dataset: { choice: value } } : null } }); },
+    async rate(value) { await root.click({ target: { closest: (selector) => selector === '[data-rating]' ? { dataset: { rating: String(value) } } : null } }); },
     async action(name) { await root.click({ target: { closest: (selector) => selector === '[data-action]' ? { dataset: { action: name } } : null } }); },
     cleanup() { Object.assign(globalThis, original); },
   };
 }
 
-test('a known slug loads its profile and an unknown slug returns to landing', async () => {
-  const known = await mount('?type=chessmaster');
-  try {
-    assert.match(known.root.innerHTML, /The Chessmaster/);
-    assert.match(known.root.innerHTML, /HPAIC/);
-    assert.match(known.root.innerHTML, /Your five<br \/>instincts/);
-    assert.equal((known.root.innerHTML.match(/class="axis-row"/g) || []).length, 5);
-  } finally { known.cleanup(); }
-  const unknown = await mount('?type=FSIC');
-  try { assert.match(unknown.root.innerHTML, /Find my court type/); }
-  finally { unknown.cleanup(); }
+test('a known slug loads its archetype and an unknown slug returns to landing', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const known = await mount(`?type=${slug}`);
+  assert.match(known.root.innerHTML, /result/);
+  assert.ok(known.root.innerHTML.includes(ARCHETYPES[slug].name));
+  known.cleanup();
+
+  const unknown = await mount('?type=not-a-real-type');
+  assert.match(unknown.root.innerHTML, /page--landing/);
+  unknown.cleanup();
 });
 
-test('a choice enables Next, back preserves previous answers, and completion shares a slug', async () => {
+test('answering every item reaches a result and writes its slug to the url', async () => {
   const app = await mount();
-  try {
-    assert.match(app.root.innerHTML, /45 game situations/);
-    await app.action('start');
-    assert.match(app.root.innerHTML, /QUESTION 01 \/ 45/);
-    assert.match(app.root.innerHTML, /data-action="next" disabled/);
-    await app.choose(questions[0].options[0].value);
-    assert.match(app.root.innerHTML, /QUESTION 01 \/ 45/);
-    assert.doesNotMatch(app.root.innerHTML, /data-action="next" disabled/);
+  await app.action('start');
+  for (let index = 0; index < items.length; index++) {
+    await app.rate(4);
     await app.action('next');
-    assert.match(app.root.innerHTML, /QUESTION 02 \/ 45/);
-    await app.choose(questions[1].options[0].value);
-    await app.action('back');
-    assert.match(app.root.innerHTML, /QUESTION 01 \/ 45/);
+  }
+  assert.match(app.root.innerHTML, /page--result/);
+  const slug = new URL(app.href).searchParams.get('type');
+  assert.ok(ARCHETYPES[slug], `${slug} should be a known archetype`);
+  app.cleanup();
+});
+
+test('the quiz renders all five scale points and blocks next until rated', async () => {
+  const app = await mount();
+  await app.action('start');
+  for (const label of ['Never', 'Rarely', 'Sometimes', 'Often', 'Always']) {
+    assert.ok(app.root.innerHTML.includes(label), `${label} should render`);
+  }
+  assert.match(app.root.innerHTML, /disabled/);
+  await app.action('next');
+  assert.ok(app.root.innerHTML.includes('QUESTION 01'), 'next should not advance an unrated item');
+  await app.rate(3);
+  await app.action('next');
+  assert.ok(app.root.innerHTML.includes('QUESTION 02'));
+  app.cleanup();
+});
+
+test('a completed result shows all nine trait bars and the within-person note', async () => {
+  const app = await mount();
+  await app.action('start');
+  for (let index = 0; index < items.length; index++) {
+    await app.rate(index % 5 + 1);
     await app.action('next');
-    for (const question of questions.slice(1)) {
-      await app.choose(question.options[0].value);
-      await app.action('next');
-    }
-    assert.match(app.root.innerHTML, /The Firestarter/);
-    assert.equal(new URL(app.href).searchParams.get('type'), results.FSDBC.slug);
-    assert.match(app.root.innerHTML, /FSDBC/);
-  } finally { app.cleanup(); }
+  }
+  assert.match(app.root.innerHTML, /Measured against the rest of your game/);
+  assert.equal((app.root.innerHTML.match(/class="trait-row"/g) || []).length, 9);
+  app.cleanup();
+});
+
+test('a shared link shows the archetype without claiming the visitor answered', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const app = await mount(`?type=${slug}`);
+  assert.ok(!app.root.innerHTML.includes('trait-row'), 'a shared link has no trait scores to show');
+  app.cleanup();
 });
