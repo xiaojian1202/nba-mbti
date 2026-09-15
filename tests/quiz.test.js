@@ -104,3 +104,21 @@ test('a modifier above its midpoint takes the leading pole', () => {
   assert.equal(profile.tempo, 'fast');
   assert.equal(profile.temper, 'expressive');
 });
+
+test('tier selection follows the primary band', () => {
+  let answers = Object.fromEntries(items.map((item) => [item.id, 2]));
+  const raise = (traitId, value) => {
+    for (const item of items.filter((item) => item.kind === 'trait' && item.key === traitId)) answers[item.id] = value;
+  };
+  raise('shooting', 5);
+  const towering = scoreAnswers(answers);
+  assert.equal(towering.proficiency.shooting, 'Elite');
+  assert.equal(towering.tier, 'pure');
+  assert.equal(towering.slug, towering.archetype.slug);
+
+  answers = Object.fromEntries(items.map((item) => [item.id, 4]));
+  answers[items.find((item) => item.kind === 'trait' && item.key === 'shooting').id] = 5;
+  const modest = scoreAnswers(answers);
+  assert.equal(modest.proficiency.shooting, 'Strong');
+  assert.ok(['authored', 'composed'].includes(modest.tier));
+});

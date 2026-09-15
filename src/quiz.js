@@ -1,5 +1,6 @@
 import { items } from './questions.js';
 import { TRAITS, ROLES, MODIFIERS, MODIFIER_MIDPOINT, proficiency } from './traits.js';
+import { buildArchetype } from './archetypes.js';
 
 export { items };
 
@@ -35,6 +36,8 @@ export function scoreAnswers(answers) {
     || TRAITS.indexOf(left) - TRAITS.indexOf(right)
   ));
 
+  const archetype = buildArchetype(ranked[0].id, ranked[1].id, bands[ranked[0].id]);
+
   const modifierPoles = Object.fromEntries(MODIFIERS.map((modifier) => {
     const total = items
       .filter((item) => item.kind === 'modifier' && item.key === modifier.id)
@@ -51,6 +54,9 @@ export function scoreAnswers(answers) {
     role: strongestRole.id,
     primary: ranked[0].id,
     secondary: ranked[1].id,
+    tier: archetype.tier,
+    archetype,
+    slug: archetype.slug,
     tempo: modifierPoles.tempo,
     temper: modifierPoles.temper,
   };
