@@ -37,6 +37,10 @@ test('a known slug loads its archetype and an unknown slug returns to landing', 
   const unknown = await mount('?type=not-a-real-type');
   assert.match(unknown.root.innerHTML, /page--landing/);
   unknown.cleanup();
+
+  const prototype = await mount('?type=toString');
+  assert.match(prototype.root.innerHTML, /page--landing/);
+  prototype.cleanup();
 });
 
 test('answering every item reaches a result and writes its slug to the url', async () => {

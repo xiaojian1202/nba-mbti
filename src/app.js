@@ -4,7 +4,7 @@ import { TRAITS, ROLES, MODIFIERS, SCALE } from './traits.js';
 
 const root = document.querySelector('#app');
 const slug = new URLSearchParams(window.location.search).get('type');
-const shared = slug ? ARCHETYPES[slug] : null;
+const shared = Object.hasOwn(ARCHETYPES, slug) ? ARCHETYPES[slug] : null;
 const state = {
   screen: shared ? 'result' : 'landing',
   index: 0,
