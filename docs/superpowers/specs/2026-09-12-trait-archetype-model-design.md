@@ -1,7 +1,9 @@
 # Trait Archetype Model — Design
 
 Date: 2026-09-12
-Status: Approved design, ready for implementation planning
+Status: SUPERSEDED by `2026-09-15-likert-trait-instrument-design.md`. Do not implement
+from this document: its forced-choice instrument makes trait scores ipsative, and its
+absolute proficiency bands are not supported by that instrument.
 Supersedes `2026-09-12-five-axis-redesign-design.md`
 
 ## Problem
