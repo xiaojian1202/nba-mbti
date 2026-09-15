@@ -41,7 +41,7 @@ const traitItems = {
   protection: [
     { stem: 'A driver gets past the first defender while you guard a player along the baseline.', action: 'You leave your matchup to meet the driver at the rim.' },
     { stem: 'A finisher comes straight at you under the basket with the ball exposed.', action: 'You contest straight up with both arms raised.' },
-    { stem: 'On film, a shot goes up while you are near the lane with a rebounder behind you.', action: 'You put your body between that rebounder and the rim.' },
+    { stem: 'On film, an opponent shoots while you are near the lane with an opposing rebounder behind you.', action: 'You put your body between that rebounder and the rim.' },
     { stem: 'A screen pulls two teammates toward the ball while you can see the action from the baseline.', action: 'You call out the back-line rotation.' },
   ],
   movement: [

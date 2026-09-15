@@ -42,3 +42,9 @@ test('the four items for a trait are distinct from one another', () => {
     assert.equal(new Set(own.map((item) => item.stem)).size, own.length, `${trait.id} has duplicate stems`);
   }
 });
+
+test('Protection defensive rebounding explicitly identifies the opposing shooter and rebounder', () => {
+  const defensiveRebound = items.filter((item) => item.kind === 'trait' && item.key === 'protection')[2];
+  assert.match(defensiveRebound.stem, /an opponent shoots/i);
+  assert.match(defensiveRebound.stem, /an opposing rebounder behind you/i);
+});
