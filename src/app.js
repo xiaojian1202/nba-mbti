@@ -16,9 +16,10 @@ const ball = `<img class="brand-ball" src="./public/images/basketball-mark-outli
 const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
 
 function header() {
+  const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview"><span class="nav-number">1</span>Overview</button><button data-action="instincts"><span class="nav-number">2</span>Instincts</button></nav>`;
   return `<header class="site-header"><div class="header-inner">
     <button class="brand" data-action="home" aria-label="Court Type home">${ball}<span>Court<span class="brand-slash">.</span>Type</span></button>
-    <nav class="header-nav" aria-label="Main navigation"><button data-action="overview"><span class="nav-number">1</span>Overview</button><button data-action="instincts"><span class="nav-number">2</span>Instincts</button></nav>
+    ${nav}
     <button class="header-cta" data-action="start">Take The Quiz</button>
   </div></header>`;
 }
@@ -31,16 +32,15 @@ function landing() {
   root.innerHTML = `<div class="page page--landing">
     ${header()}
     <main><section class="hero" id="overview" aria-labelledby="hero-title">
-      <div class="hero-visual"><img src="./public/images/hero-basketball.jpg" alt="Basketball player rising toward the hoop" /></div>
+      <div class="hero-visual"><img src="./public/images/hero-basketball.jpg" alt="Basketball player rising toward the hoop" fetchpriority="high" /></div>
       <img class="hero-ghost" src="./public/images/basketball-mark-outlined.svg" alt="" />
       <div class="hero-copy shell"><p class="micro-label">Basketball Personality Test</p><h1 id="hero-title">What's<br />your <em>game?</em></h1>
         <p class="hero-intro">Every player brings something different to the court. Find the instincts that make your game yours.</p>
         <button class="primary-button" data-action="start">Find my court type ${arrow}</button>
-        <p class="hero-small">${items.length} game situations <span aria-hidden="true">·</span> About 10 minutes <span aria-hidden="true">·</span> No wrong answers</p>
       </div><div class="hero-foot shell"><span class="micro-label">SCROLL TO EXPLORE</span><span class="hero-rule"></span></div>
     </section>
     <section class="instincts-section" id="instincts" aria-label="How your type works"><div class="shell">
-      <div class="manifesto-intro"><span class="orange-rule"></span><div><h2>Nine traits.<br />Four roles.</h2><p>Your answers measure nine ways of contributing to a game, then reveal the role you bring to the floor.</p><span class="manifesto-count">72 POSSIBLE TYPES&nbsp; / &nbsp;1 YOURS</span></div></div>
+      <div class="manifesto-intro"><span class="orange-rule"></span><div><h2>Nine traits.<br />Four roles.</h2><p>You rate how often each situation sounds like you, from ${SCALE[0].label.toLowerCase()} to ${SCALE[SCALE.length - 1].label.toLowerCase()}. Nothing is a forced choice between two options: all nine traits are scored on their own, then ranked against the rest of your game. Your two strongest traits name your type, and the role they belong to is what you bring to the floor.</p></div></div>
       <div class="instinct-grid">${ROLES.map((role, index) => `<article class="instinct-card"><span class="circle-number">${String(index + 1).padStart(2, '0')}</span><h3>${role.label}</h3><p>${TRAITS.filter((trait) => trait.role === role.id).map((trait) => trait.label).join(' · ')}</p></article>`).join('')}</div>
     </div></section>
     <section class="end-cta shell"><button data-action="start"><span class="micro-label">READY?</span><span class="end-cta-line">Start The Quiz <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
@@ -56,14 +56,18 @@ function quiz() {
     ${header()}
     <main class="shell">
     <div class="quiz-topline"><span>THE SCOUTING REPORT</span><span>QUESTION ${n} / ${items.length}</span></div>
-    <progress class="quiz-progress" value="${state.index + 1}" max="${items.length}" aria-label="Quiz progress"></progress>
+    <progress class="quiz-progress" value="${Object.keys(state.answers).length}" max="${items.length}" aria-label="Quiz progress"></progress>
     <section class="quiz-layout" aria-labelledby="question-title">
       <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="./public/images/basketball-mark-outlined.svg" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
       <div class="quiz-main">
         <p class="item-stem">${item.stem}</p>
         <h1 id="question-title" tabindex="-1">${item.action}</h1>
-        <div class="scale" role="group" aria-label="How often is this you?">
-          ${SCALE.map((point) => `<button class="scale-point ${selected === point.value ? 'scale-point--selected' : ''}" data-rating="${point.value}" aria-label="${point.label}" aria-pressed="${selected === point.value}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`).join('')}
+        <div class="scale" role="radiogroup" aria-label="How often is this you?">
+          ${SCALE.map((point) => {
+            const isSelected = selected === point.value;
+            const isTabStop = selected ? isSelected : point.value === SCALE[0].value;
+            return `<button class="scale-point ${isSelected ? 'scale-point--selected' : ''}" data-rating="${point.value}" aria-label="${point.label}" role="radio" aria-checked="${isSelected}" tabindex="${isTabStop ? '0' : '-1'}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`;
+          }).join('')}
         </div>
         <div class="quiz-actions"><button class="text-button" data-action="back">${state.index === 0 ? 'Back to start' : 'Previous question'}</button><button class="primary-button primary-button--small" data-action="next" ${selected ? '' : 'disabled'}>${state.index === items.length - 1 ? 'See my type' : 'Next play'} ${arrow}</button></div>
       </div>
@@ -81,7 +85,7 @@ function result() {
     <div class="modifier-list">${MODIFIERS.map((modifier) => `<p><span class="micro-label">${modifier.label}</span> ${modifier.names[modifier.poles.indexOf(profile[modifier.id])]}</p>`).join('')}</div>
   </div>` : '';
   const lead = profile ? 'YOUR SCOUTING REPORT IS IN.' : 'A COURT TYPE.';
-  const roleLabel = profile ? ROLES.find((role) => role.id === profile.role).label : archetype.role;
+  const roleLabel = archetype.role;
   const quizAction = profile ? 'restart' : 'start';
   const quizLabel = profile ? 'Take it again' : 'Find my court type';
 
@@ -89,7 +93,7 @@ function result() {
     ${header()}
     <main class="shell">
     <section class="result-lead" aria-labelledby="result-title">
-      <div class="result-left"><p class="result-tag">${lead}</p><p class="result-code">${archetype.tagline}</p><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : 'ONE OF SEVENTY-TWO COURT TYPES'}</p></div>
+      <div class="result-left"><p class="result-tag">${lead}</p><p class="result-code">${archetype.tagline}</p><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : 'ONE OF EIGHTY-ONE COURT TYPES'}</p></div>
       <div class="result-right"><h1 id="result-title" tabindex="-1">${archetype.name}</h1><p class="result-role">${roleLabel}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
     </section>
     <section class="result-details"><div><h2>What you bring<br />to the floor</h2><ul class="strength-list">${archetype.strengths.slice(0, 3).map((strength, index) => `<li><span class="circle-number">${String(index + 1).padStart(2, '0')}</span>${strength}</li>`).join('')}</ul></div>${scorecard}</section>
@@ -110,6 +114,22 @@ function clearTypeUrl() {
   url.searchParams.delete('type');
   window.history.replaceState({}, '', url);
 }
+
+const SCALE_STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+
+root.addEventListener('keydown', (event) => {
+  const point = event.target.closest('[data-rating]');
+  if (!point) return;
+  if (!(event.key in SCALE_STEPS) && event.key !== 'Home' && event.key !== 'End') return;
+  event.preventDefault();
+  const currentIndex = SCALE.findIndex((option) => option.value === Number(point.dataset.rating));
+  const nextIndex = event.key === 'Home' ? 0
+    : event.key === 'End' ? SCALE.length - 1
+    : (currentIndex + SCALE_STEPS[event.key] + SCALE.length) % SCALE.length;
+  state.answers[items[state.index].id] = SCALE[nextIndex].value;
+  quiz();
+  root.querySelector(`[data-rating="${SCALE[nextIndex].value}"]`)?.focus();
+});
 
 root.addEventListener('click', async (event) => {
   const rating = event.target.closest('[data-rating]');

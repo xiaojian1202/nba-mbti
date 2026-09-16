@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "python3 -m http.server 5173",
+    "dev": "python3 scripts/dev.py",
     "test": "node --test",
     "check": "node --check src/traits.js && node --check src/questions.js && node --check src/archetypes.js && node --check src/quiz.js && node --check src/app.js"
   }
