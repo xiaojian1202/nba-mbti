@@ -61,6 +61,7 @@ test('the quiz renders all five scale points and blocks next until rated', async
   await app.action('start');
   for (const label of ['Never', 'Rarely', 'Sometimes', 'Often', 'Always']) {
     assert.ok(app.root.innerHTML.includes(label), `${label} should render`);
+    assert.match(app.root.innerHTML, new RegExp(`aria-label="${label}"`), `${label} should label its button`);
   }
   assert.match(app.root.innerHTML, /disabled/);
   await app.action('next');

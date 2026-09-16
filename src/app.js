@@ -63,7 +63,7 @@ function quiz() {
         <p class="item-stem">${item.stem}</p>
         <h1 id="question-title" tabindex="-1">${item.action}</h1>
         <div class="scale" role="group" aria-label="How often is this you?">
-          ${SCALE.map((point) => `<button class="scale-point ${selected === point.value ? 'scale-point--selected' : ''}" data-rating="${point.value}" aria-pressed="${selected === point.value}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`).join('')}
+          ${SCALE.map((point) => `<button class="scale-point ${selected === point.value ? 'scale-point--selected' : ''}" data-rating="${point.value}" aria-label="${point.label}" aria-pressed="${selected === point.value}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`).join('')}
         </div>
         <div class="quiz-actions"><button class="text-button" data-action="back">${state.index === 0 ? 'Back to start' : 'Previous question'}</button><button class="primary-button primary-button--small" data-action="next" ${selected ? '' : 'disabled'}>${state.index === items.length - 1 ? 'See my type' : 'Next play'} ${arrow}</button></div>
       </div>

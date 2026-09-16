@@ -6,6 +6,6 @@
   "scripts": {
     "dev": "python3 -m http.server 5173",
     "test": "node --test",
-    "check": "node --check src/questions.js && node --check src/quiz.js && node --check src/app.js"
+    "check": "node --check src/traits.js && node --check src/questions.js && node --check src/archetypes.js && node --check src/quiz.js && node --check src/app.js"
   }
 }
