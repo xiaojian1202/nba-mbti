@@ -13,12 +13,13 @@ const state = {
   answers: {},
   profile: null,
   archetype: shared,
+  navSection: 0,
 };
 const ball = `<img class="brand-ball" src="./public/images/basketball-mark-outlined.svg" alt="" />`;
 const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
 
 function header() {
-  const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview"><span class="nav-number">1</span>Overview</button><button data-action="instincts"><span class="nav-number">2</span>Instincts</button></nav>`;
+  const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview" class="${state.navSection === 0 ? 'header-nav-active' : ''}"><span class="nav-number">1</span>Overview</button><button data-action="instincts" class="${state.navSection === 1 ? 'header-nav-active' : ''}"><span class="nav-number">2</span>Instincts</button></nav>`;
   return `<header class="site-header"><div class="header-inner">
     <button class="brand" data-action="home" aria-label="Court Type home">${ball}<span>Court<span class="brand-slash">.</span>Type</span></button>
     ${nav}
@@ -133,13 +134,32 @@ let scrollEffectsQueued = false;
 
 function updateScrollEffects() {
   scrollEffectsQueued = false;
+  const header = root.querySelector('.site-header');
+  header?.classList?.toggle('site-header--scrolled', window.scrollY > 40);
+
   const rule = root.querySelector('.hero-rule');
   const heroImg = root.querySelector('.hero-visual img');
+  const ghost = root.querySelector('.hero-ghost');
   const maxScroll = (document.documentElement?.scrollHeight ?? 0) - (window.innerHeight ?? 0);
   const progress = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
   rule?.style?.setProperty('--scroll-fill', `${progress * 100}%`);
-  if (heroImg?.style && !reducedMotion && window.innerWidth > 700) {
-    heroImg.style.setProperty('--parallax-shift', `${Math.min(window.scrollY * 0.15, 40)}px`);
+  if (!reducedMotion && window.innerWidth > 700) {
+    if (heroImg?.style) heroImg.style.setProperty('--parallax-shift', `${Math.min(window.scrollY * 0.15, 40)}px`);
+    if (ghost?.style) {
+      ghost.style.setProperty('--ghost-shift', `${Math.min(window.scrollY * 0.2, 140)}px`);
+      ghost.style.setProperty('--ghost-rotate', `${Math.min(window.scrollY * 0.03, 20)}deg`);
+    }
+  }
+
+  const instincts = root.querySelector('#instincts');
+  if (state.screen === 'landing' && instincts) {
+    const activeSection = window.scrollY > instincts.offsetTop - window.innerHeight * 0.5 ? 1 : 0;
+    if (state.navSection !== activeSection) {
+      state.navSection = activeSection;
+      root.querySelectorAll('[data-action="overview"], [data-action="instincts"]').forEach((button) => {
+        button.classList.toggle('header-nav-active', button.dataset.action === (activeSection === 1 ? 'instincts' : 'overview'));
+      });
+    }
   }
 }
 
