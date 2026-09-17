@@ -6,16 +6,12 @@ export { items };
 
 const isValid = (value) => Number.isInteger(value) && value >= 1 && value <= 5;
 
-function sumOf(answers, matches) {
-  return items.filter(matches).reduce((total, item) => total + answers[item.id], 0);
-}
-
 export function scoreAnswers(answers) {
   if (items.some((item) => !isValid(answers[item.id]))) return null;
 
   const traits = Object.fromEntries(TRAITS.map((trait) => [
     trait.id,
-    sumOf(answers, (item) => item.kind === 'trait' && item.key === trait.id),
+    items.filter((item) => item.kind === 'trait' && item.key === trait.id).reduce((total, item) => total + answers[item.id], 0),
   ]));
 
   const mean = TRAITS.reduce((total, trait) => total + traits[trait.id], 0) / TRAITS.length;
@@ -29,11 +25,10 @@ export function scoreAnswers(answers) {
 
   const strongestRole = ROLES.reduce((best, role) => (roles[role.id] > roles[best.id] ? role : best), ROLES[0]);
 
-  // Rank by score, then by the strength of the trait's role, then by canonical order.
+  // Stable sort preserves canonical trait order when score and role strength tie.
   const ranked = [...TRAITS].sort((left, right) => (
     traits[right.id] - traits[left.id]
     || roles[right.role] - roles[left.role]
-    || TRAITS.indexOf(left) - TRAITS.indexOf(right)
   ));
 
   const archetype = buildArchetype(ranked[0].id, ranked[1].id, traits[ranked[0].id] - mean);

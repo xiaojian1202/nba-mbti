@@ -1,5 +1,4 @@
 """Static dev server that never lets the browser cache a response."""
-import functools
 import http.server
 
 

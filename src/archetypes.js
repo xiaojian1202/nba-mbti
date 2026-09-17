@@ -6,12 +6,6 @@ import { TRAITS } from './traits.js';
 // so pure fires for roughly 10-20% of realistic respondents; see the sweep in the PR notes.
 export const PURE_DEVIATION_THRESHOLD = 7;
 
-const BASE_NAMES = {
-  vision: 'The Orchestrator', shotCreation: 'The Shotmaker', shooting: 'The Sniper',
-  slashing: 'The Slasher', post: 'The Bruiser', disruption: 'The Pickpocket',
-  protection: 'The Wall', movement: 'The Mover', grit: 'The Hard Hat',
-};
-
 const MODIFIER_WORDS = {
   vision: 'Heads-Up', shotCreation: 'Self-Made', shooting: 'Deadeye',
   slashing: 'Downhill', post: 'Low-Block', disruption: 'Ball-Hawk',
@@ -278,7 +272,7 @@ const AUTHORED = {
 const slugify = (name) => name.replace(/^The /, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function compose(primary, secondary) {
-  const name = `The ${MODIFIER_WORDS[secondary]} ${BASE_NAMES[primary].replace('The ', '')}`;
+  const name = `The ${MODIFIER_WORDS[secondary]} ${PURE[primary].name.replace('The ', '')}`;
   const primaryTrait = TRAITS.find((trait) => trait.id === primary);
   const secondaryTrait = TRAITS.find((trait) => trait.id === secondary);
   return {
@@ -300,7 +294,7 @@ export function buildArchetype(primary, secondary, primaryDeviation) {
 
 export const ARCHETYPES = Object.fromEntries(
   TRAITS.flatMap((primary) => [
-    buildArchetype(primary.id, TRAITS.find((trait) => trait.id !== primary.id).id, PURE_DEVIATION_THRESHOLD),
+    { ...PURE[primary.id], tier: 'pure' },
     ...TRAITS.filter((trait) => trait.id !== primary.id).map((secondary) => buildArchetype(primary.id, secondary.id, 0)),
   ]).map((archetype) => [archetype.slug, archetype]),
 );

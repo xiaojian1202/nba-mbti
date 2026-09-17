@@ -27,9 +27,7 @@ function header() {
   </div></header>`;
 }
 
-function footer() {
-  return `<footer class="site-footer"><span>Court<span class="brand-slash">.</span>Type</span><span>FIND YOUR GAME. TRUST YOUR INSTINCTS.</span><span>BUILT FOR THE LOVE OF THE GAME</span></footer>`;
-}
+const footer = `<footer class="site-footer"><span>Court<span class="brand-slash">.</span>Type</span><span>FIND YOUR GAME. TRUST YOUR INSTINCTS.</span><span>BUILT FOR THE LOVE OF THE GAME</span></footer>`;
 
 function landing() {
   root.innerHTML = `<div class="page page--landing">
@@ -47,7 +45,7 @@ function landing() {
       <div class="instinct-grid">${ROLES.map((role, index) => `<article class="instinct-card"><span class="circle-number">${String(index + 1).padStart(2, '0')}</span><h3>${role.label}</h3><p>${TRAITS.filter((trait) => trait.role === role.id).map((trait) => trait.label).join(' · ')}</p></article>`).join('')}</div>
     </div></section>
     <section class="end-cta shell"><button data-action="start"><span class="micro-label">READY?</span><span class="end-cta-line">Start The Quiz <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
-    ${footer()}
+    ${footer}
   </div>`;
 }
 
@@ -88,7 +86,6 @@ function result() {
     <div class="modifier-list">${MODIFIERS.map((modifier) => `<p><span class="micro-label">${modifier.label}</span> ${modifier.names[modifier.poles.indexOf(profile[modifier.id])]}</p>`).join('')}</div>
   </div>` : '';
   const lead = profile ? 'YOUR SCOUTING REPORT IS IN.' : 'A COURT TYPE.';
-  const roleLabel = archetype.role;
   const quizAction = profile ? 'restart' : 'start';
   const quizLabel = profile ? 'Take it again' : 'Find my court type';
 
@@ -97,11 +94,11 @@ function result() {
     <main class="shell">
     <section class="result-lead" aria-labelledby="result-title">
       <div class="result-left"><p class="result-tag">${lead}</p><h1 id="result-title" tabindex="-1" class="result-name">${archetype.name}</h1><p class="result-code">${archetype.tagline}</p></div>
-      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${roleLabel}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
+      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${archetype.role}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
     </section>
     <section class="result-details"><div><h2>What you bring<br />to the floor</h2><ul class="strength-list">${archetype.strengths.slice(0, 3).map((strength, index) => `<li><span class="circle-number">${String(index + 1).padStart(2, '0')}</span>${strength}</li>`).join('')}</ul></div>${scorecard}</section>
     <section class="end-cta"><button data-action="${quizAction}"><span class="micro-label">THE BEST TEAMS NEED EVERY TYPE</span><span class="end-cta-line">${profile ? 'Run It Back' : 'Find My Type'} <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
-    ${footer()}
+    ${footer}
   </div>`;
 }
 
@@ -122,9 +119,7 @@ function updateScaleSelection() {
 }
 
 function render(focus = false) {
-  if (state.screen === 'landing') landing();
-  if (state.screen === 'quiz') quiz();
-  if (state.screen === 'result') result();
+  ({ landing, quiz, result })[state.screen]();
   if (focus) root.querySelector('h1')?.focus();
   updateScrollEffects();
 }
@@ -171,9 +166,10 @@ if (typeof window.addEventListener === 'function') {
   }, { passive: true });
 }
 
-function clearTypeUrl() {
+function updateTypeUrl(slug) {
   const url = new URL(window.location.href);
-  url.searchParams.delete('type');
+  if (slug) url.searchParams.set('type', slug);
+  else url.searchParams.delete('type');
   window.history.replaceState({}, '', url);
 }
 
@@ -215,12 +211,12 @@ root.addEventListener('click', async (event) => {
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
-    clearTypeUrl();
+    updateTypeUrl(null);
   } else if (action === 'home') {
     state.screen = 'landing';
     state.profile = null;
     state.archetype = null;
-    clearTypeUrl();
+    updateTypeUrl(null);
   } else if (action === 'back') {
     if (state.index === 0) state.screen = 'landing';
     else state.index -= 1;
@@ -233,9 +229,7 @@ root.addEventListener('click', async (event) => {
       state.profile = profile;
       state.archetype = profile.archetype;
       state.screen = 'result';
-      const url = new URL(window.location.href);
-      url.searchParams.set('type', profile.slug);
-      window.history.replaceState({}, '', url);
+      updateTypeUrl(profile.slug);
     }
   } else if (action === 'share') {
     const status = root.querySelector('#share-status');
