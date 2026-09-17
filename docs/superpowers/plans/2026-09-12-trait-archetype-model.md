@@ -1,3 +1,7 @@
+> **SUPERSEDED.** This plan implements `2026-09-12-trait-archetype-model-design.md`,
+> which has been superseded by `2026-09-15-likert-trait-instrument-design.md`. A new
+> plan will be written against that spec.
+
 # Trait Archetype Model Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

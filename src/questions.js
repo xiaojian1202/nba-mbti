@@ -1,75 +1,100 @@
-const rounds = [
-  [
-    ['Your team grabs a defensive rebound. What is your first move?', 'Sprint the lane before the defense gets set.', 'Bring it up and make the defense guard a full possession.'],
-    ['A double-team comes at you. What opening do you see?', 'A gap to get my own shot off.', 'The teammate the defense has left open.'],
-    ['Your matchup is picking up their dribble. How do you defend?', 'Crowd the ball and reach for a deflection.', 'Stay square and take away the safe outlet.'],
-    ['You hit a big shot and the building erupts. What happens next?', 'I let that energy show and carry it into the next play.', 'I keep the same expression and get back on defense.'],
-    ['Two minutes left. What do your teammates need most from you?', 'Someone willing to own the outcome.', 'Someone who makes all five players better together.'],
-  ],
-  [
-    ['Which possession would you rather lead?', 'A four-on-three while the defense is scrambling.', 'A set play that moves defenders until a seam opens.'],
-    ['Which scoring play feels most like yours?', 'Making the finish after creating an angle.', 'Delivering the pass that makes the finish easy.'],
-    ['Which defensive possession feels most like yours?', 'A sudden steal that changes the game.', 'A stop where every passing lane stays closed.'],
-    ['Which close-game atmosphere suits you?', 'A loud one where I can feed off every swing.', 'A tense one where I can stay steady.'],
-    ['Which team contribution feels most satisfying?', 'Taking responsibility for the decisive outcome.', 'Making everyone else more effective.'],
-  ],
-  [
-    ['Your first two early shots miss. How do you find an advantage?', 'Keep running into space before the defense settles.', 'Slow the possession and work a better angle.'],
-    ['You are 0-for-7. How do you help the offense?', 'Keep finding shots I can make and finish the next one.', 'Draw attention and create easier looks for teammates.'],
-    ['An opponent has scored twice on you. What changes?', 'Pressure earlier and force them into a hurried mistake.', 'Hold my position and remove their favorite route.'],
-    ['Your team gives up a late run. How do you respond?', 'Show the urgency and bring everyone into the fight.', 'Keep my voice and body language measured.'],
-    ['You have had a quiet game. How do you make the finish count?', 'Put myself at the center of the deciding play.', 'Do the work that gives the group its best chance.'],
-  ],
-  [
-    ['What would your coach write about your timing?', 'Gets us going before opponents can match up.', 'Makes organized defenses work for every second.'],
-    ['What would your teammates say you do with the ball?', 'Turns openings into points personally.', 'Turns pressure into openings for someone else.'],
-    ['What would your coach praise about your defense?', 'Creates extra possessions with active hands.', 'Keeps the entire coverage connected.'],
-    ['What would your teammates notice in a close finish?', 'My emotion gives the group a spark.', 'My composure steadies the group.'],
-    ['What would your teammates say about your role?', 'Volunteers to carry the final responsibility.', 'Makes the lineup fit together.'],
-  ],
-  [
-    ['Which tradeoff can you live with?', 'An early decent look before we can find a perfect one.', 'Passing up an early look to work for a cleaner one.'],
-    ['Which tradeoff can you live with on offense?', 'Missing a shot I created for myself.', 'Passing up my own good shot to make a teammate better.'],
-    ['Which defensive tradeoff can you live with?', 'Getting beaten once while trying to force a turnover.', 'Giving up the steal to stay in sound position.'],
-    ['Which reaction can you live with after a mistake?', 'Letting my frustration show before I reset.', 'Keeping it inside even if no one sees how much I care.'],
-    ['Which tradeoff can you live with for a win?', 'Being the one held responsible if the last play fails.', 'Doing essential work that may not get the credit.'],
-  ],
-  [
-    ['You force a loose ball near midcourt. What comes next?', 'Attack before anyone finds their assignment.', 'Secure it and make the next action deliberate.'],
-    ['The defense switches your screen. What do you do?', 'Find a way to score against the new matchup.', 'Shift the ball to the teammate with the better matchup.'],
-    ['A pass hangs in the air near your man. What is your move?', 'Jump the lane and try to take it away.', 'Stay between my man and the basket.'],
-    ['You make a game-saving stop. How does it look?', 'I celebrate it with the whole bench.', 'I nod and get ready for the next possession.'],
-    ['Your team calls its last timeout. What do you ask for?', 'Let me be accountable for the last decision.', 'Put everyone in a spot where they can succeed.'],
-  ],
-  [
-    ['A defender is slow getting back. Where is your advantage?', 'In the seconds before they recover.', 'In the spacing we can build once everyone arrives.'],
-    ['A help defender steps toward you. What is the payoff?', 'The opening I can use to finish.', 'The passing angle that opens behind them.'],
-    ['Your team needs one stop. What is your first thought?', 'Make the ballhandler uncomfortable immediately.', 'Protect the space they most want to reach.'],
-    ['The game goes to overtime. What helps you compete?', 'The extra intensity sharpens me.', 'I treat the next possession like any other.'],
-    ['You could define one play in a win. Which one?', 'The play where I took ownership at the end.', 'The play where my work made another player shine.'],
-  ],
-  [
-    ['The clock shows eight seconds. How do you use them?', 'Get into the opening now while it is there.', 'Move the defense until the best opening appears.'],
-    ['You get the ball after an offensive rebound. Your read?', 'Find a finish before defenders can reset.', 'Move it to a teammate with a clearer opportunity.'],
-    ['Your opponent runs the same action again. Your answer?', 'Anticipate it and blow up the pass.', 'Be early to the right spot and deny the angle.'],
-    ['A teammate looks nervous at the line. What do you offer?', 'A visible burst of belief and encouragement.', 'A calm word that makes the moment ordinary.'],
-    ['Your team is down one. Which responsibility fits you?', 'Be ready for the last choice to run through me.', 'Make the screen, cut, or rotation that makes it work.'],
-  ],
-  [
-    ['After a stop, what does a smart possession look like?', 'Use the advantage before their defense is arranged.', 'Control the ball and uncover a weakness in their set defense.'],
-    ['When defenders focus on you, what do you want?', 'Just enough room to make them pay with a score.', 'A teammate getting a better chance because of that focus.'],
-    ['What is your final defensive instruction to yourself?', 'Find a moment to turn their possession over.', 'Do not let the coverage break anywhere.'],
-    ['The final possession starts. Where is your energy?', 'Out in the open; I want everyone to feel it.', 'Under control; I want the moment to feel familiar.'],
-    ['The game is won. Which story feels like yours?', 'I carried the responsibility when it counted.', 'I helped all the pieces become a team.'],
-  ],
-];
+import { TRAITS, MODIFIERS } from './traits.js';
 
-const axisIds = ['tempo', 'creation', 'defense', 'temperament', 'role'];
-const poles = [['F', 'H'], ['S', 'P'], ['D', 'A'], ['B', 'I'], ['C', 'G']];
+// Four items per trait, keyed by trait id, in the required facet order.
+const traitItems = {
+  vision: [
+    { stem: 'A teammate is about to pass you the ball on the wing.', action: 'You pick out your next passing target before the ball reaches you.' },
+    { stem: 'Two defenders trap you near the sideline with your dribble still live.', action: 'You pass over the trap to the teammate it leaves open.' },
+    { stem: 'On film, the defense crowds your side while a teammate waits in the opposite corner.', action: 'You send the ball across the court to that corner.' },
+    { stem: 'Your pull-up is open, and a teammate has a closer finish through a narrow passing window.', action: 'You give up your shot to feed that teammate.' },
+  ],
+  shotCreation: [
+    { stem: 'You catch the ball standing still above the arc with one defender squared up.', action: 'You use a jab step to start creating your own shot.' },
+    { stem: 'The play breaks down and a teammate gives you the ball with three seconds left.', action: 'You take the bailout shot off your own dribble.' },
+    { stem: 'Your defender crowds your handle near half court while an outlet is available.', action: 'You use a change of direction to dribble through the pressure.' },
+    { stem: 'Late in a possession, your defender stays attached and a step-back will mean a longer shot.', action: 'You step back off the dribble to make shooting space.' },
+  ],
+  shooting: [
+    { stem: 'The pass reaches you behind the arc as a defender rushes out with a hand up.', action: 'You go straight into the catch-and-shoot jumper.' },
+    { stem: 'Your team lets you choose how to use an off-ball screen on the wing.', action: 'You curl off the screen into a jumper.' },
+    { stem: 'The game film shows you catching a pass a full step behind the three-point line.', action: 'You take the deep three from there.' },
+    { stem: 'You have room for a long two and enough time to move behind the arc.', action: 'You step back behind the line for a three.' },
+  ],
+  slashing: [
+    { stem: 'You turn the corner with the ball and a defender meets you on the way to the rim.', action: 'You drive your shoulder past their chest for a contact finish.' },
+    { stem: 'Your defender has denied two passes to you on the wing.', action: 'You cut behind the defender toward the basket.' },
+    { stem: 'Teammates find you in the corner as your defender sprints out to contest.', action: 'You put the ball down past the closeout.' },
+    { stem: 'A taller helper waits at the rim, and you have room to try a high finish.', action: 'You lift the ball over the helper to finish.' },
+  ],
+  post: [
+    { stem: 'The ball is on the wing and your defender stands beside you on the low block.', action: 'You seal the defender behind you to receive the entry pass.' },
+    { stem: 'You receive the ball near the paint after a switch leaves a smaller defender on you.', action: 'You back the smaller defender toward the basket.' },
+    { stem: 'Your defender holds ground after your first bump on the block, with room for you to face up.', action: 'You stay in the post for an up-and-under.' },
+    { stem: 'A teammate shoots while you hold the low block, leaving you a choice between the glass and getting back.', action: 'You turn from your post position to go up for the offensive rebound.' },
+  ],
+  disruption: [
+    { stem: 'A driver passes within arm\'s reach while you guard a player one pass away.', action: 'You dig at the driver\'s live dribble.' },
+    { stem: 'An opponent has used the same wing-to-top pass twice.', action: 'You jump that passing lane on the next attempt.' },
+    { stem: 'Your team can pick up the ball either in the backcourt or at half court.', action: 'You choose to pressure the ballhandler the full length of the floor.' },
+    { stem: 'The ballhandler exposes a crossover, but reaching for it could let them get past you.', action: 'You reach for the steal in that window.' },
+  ],
+  protection: [
+    { stem: 'A driver gets past the first defender while you guard a player along the baseline.', action: 'You leave your matchup to meet the driver at the rim.' },
+    { stem: 'A finisher comes straight at you under the basket with the ball exposed.', action: 'You contest straight up with both arms raised.' },
+    { stem: 'On film, an opponent shoots while you are near the lane with an opposing rebounder behind you.', action: 'You put your body between that rebounder and the rim.' },
+    { stem: 'A screen pulls two teammates toward the ball while you can see the action from the baseline.', action: 'You call out the back-line rotation.' },
+  ],
+  movement: [
+    { stem: 'You pass from the wing to the top with space behind your defender.', action: 'You cut toward the basket as soon as the ball leaves your hands.' },
+    { stem: 'Away from the ball, a teammate is trying to shake a defender on the weak side.', action: 'You set an off-ball screen for that teammate.' },
+    { stem: 'A teammate\'s first drive stalls with you and your defender beside the lane.', action: 'You relocate along the arc to open that driving lane.' },
+    { stem: 'Your teammate drives toward your corner, and drifting toward the sideline takes you farther from the rim.', action: 'You drift out of the drive into a wider passing spot.' },
+  ],
+  grit: [
+    { stem: 'The ball is loose at your feet with bodies around it.', action: 'You\'re on the floor after it.' },
+    { stem: 'Your team has missed twice on a possession, and the paint is crowded as another shot goes up.', action: 'You crash into the rebounding traffic for the offensive board.' },
+    { stem: 'A driver is coming down the lane and you have time to establish position outside the restricted area.', action: 'You plant yourself in the driver\'s path to take a charge.' },
+    { stem: 'A teammate is chasing an offensive rebound, and you can hold off a nearby opponent without a chance to shoot.', action: 'You box out that opponent so your teammate can collect the ball.' },
+  ],
+};
 
-export const questions = rounds.flatMap((round, roundIndex) => round.map(([prompt, first, second], axisIndex) => ({
-  id: `q${roundIndex * 5 + axisIndex + 1}`,
-  axis: axisIds[axisIndex],
-  prompt,
-  options: [{ value: poles[axisIndex][0], label: first }, { value: poles[axisIndex][1], label: second }],
-})));
+// Five items per modifier. `pole` says which pole a high rating supports.
+const modifierItems = {
+  tempo: [
+    { pole: 'fast', stem: 'Your team secures the ball with numbers ahead of the defense.', action: 'You choose to get a shot up before the defense gets set.' },
+    { pole: 'fast', stem: 'After a stop, your team can run or bring the ball up into a set.', action: 'You choose an early shot in transition.' },
+    { pole: 'fast', stem: 'Your last two early shots missed, and another transition look opens.', action: 'You go for that early shot again.' },
+    { pole: 'fast', stem: 'During a timeout, a teammate asks when you want the next shot to go up.', action: 'You pick the opening seconds of the possession for that shot.' },
+    { pole: 'fast', stem: 'An early shot is available, though another pass could produce a cleaner one later.', action: 'You choose to get the shot up now.' },
+  ],
+  temper: [
+    { pole: 'expressive', stem: 'Your team gets a stop with the game tied in the final minute.', action: 'You let out a shout of celebration.' },
+    { pole: 'expressive', stem: 'You join the huddle before a close game\'s final possession.', action: 'You give your teammates a loud burst of encouragement.' },
+    { pole: 'expressive', stem: 'You miss a shot that would have tied the game.', action: 'You show your frustration with a quick clap of your hands.' },
+    { pole: 'expressive', stem: 'The bench watches you after a teammate makes a crucial basket.', action: 'You celebrate with a big fist pump.' },
+    { pole: 'expressive', stem: 'During a tense timeout, showing your excitement will put everyone\'s eyes on you.', action: 'You let that excitement show in an animated pep talk.' },
+  ],
+};
+
+// Four rounds of nine trait items; the trait order rotates by two each round so
+// that no two consecutive items share a trait, across round boundaries included.
+const rounds = [0, 1, 2, 3].map((round) => TRAITS.map((_trait, position) => {
+  const trait = TRAITS[(position + round * 2) % TRAITS.length];
+  return { kind: 'trait', key: trait.id, ...traitItems[trait.id][round] };
+}));
+
+const modifierQueue = MODIFIERS.flatMap((modifier) => modifierItems[modifier.id].map((item) => ({ kind: 'modifier', key: modifier.id, ...item })));
+
+// Interleave: one modifier item after every fourth trait item until the queue drains.
+const ordered = [];
+let modifierIndex = 0;
+rounds.flat().forEach((item, index) => {
+  ordered.push(item);
+  if ((index + 1) % 4 === 0 && modifierIndex < modifierQueue.length) {
+    ordered.push(modifierQueue[modifierIndex]);
+    modifierIndex += 1;
+  }
+});
+ordered.push(...modifierQueue.slice(modifierIndex));
+
+export const items = ordered.map((item, index) => ({ id: `i${index + 1}`, ...item }));

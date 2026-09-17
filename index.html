@@ -4,15 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0d0d0d" />
-    <meta name="description" content="Twelve plays. Four instincts. Find your basketball playing style with Court Type." />
+    <meta name="description" content="Forty-six game situations. Nine traits. Find your basketball court type with Court Type." />
     <title>Court Type — What's your game?</title>
     <link rel="icon" href="./public/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="./src/styles.css?v=3" />
-    <script type="module" src="./src/app.js?v=3"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    />
+    <link rel="preload" as="image" href="./public/images/hero-basketball.jpg" fetchpriority="high" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="module" src="./src/app.js"></script>
   </head>
   <body>
-    <main id="app"></main>
+    <div id="app"></div>
+    <noscript>
+      <main>
+        <p style="max-width: 32rem; margin: 4rem auto; padding: 0 1.5rem; font-family: sans-serif; color: #fff">
+          Court Type needs JavaScript to run the quiz. Please enable JavaScript in your browser and reload the page.
+        </p>
+      </main>
+    </noscript>
   </body>
 </html>

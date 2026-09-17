@@ -24,7 +24,7 @@ Someone can take the quiz on a phone or desktop browser and share a result link.
 
 ## Capabilities and Constraints
 
-The first release has 45 questions across five playing-style axes and 32 curated results. It takes about eight minutes. It does not use accounts, collect answers, or compare users to real NBA players.
+The first release has 46 items across nine playing-style traits and 81 archetypes. It takes about ten minutes. It does not use accounts, collect answers, or compare users to real NBA players.
 
 ## Product Principles
 

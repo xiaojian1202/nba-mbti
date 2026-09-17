@@ -1,6 +1,6 @@
 # Court Type
 
-A basketball playing-style quiz with 45 game situations and 32 curated on-court archetypes. It takes about eight minutes. All scoring happens in the browser; no account or backend is required.
+A basketball playing-style quiz with 46 game situations and 81 on-court archetypes. It takes about ten minutes. All scoring happens in the browser; no account or backend is required.
 
 ## Run locally
 
@@ -10,4 +10,4 @@ Run `npm test` for scoring tests and `npm run check` for JavaScript syntax check
 
 ## How it works
 
-Nine questions measure each of five axes: tempo, creation, defense, temperament, and role. The majority answer for each axis forms an internal five-letter type. The result page uses an archetype slug such as `?type=chessmaster` so the named profile can be shared without storing answers or exposing the internal code.
+Forty-six Likert items measure nine traits across four roles: Creator, Scorer, Defender, and Connector. The two strongest traits form an ordered pair resolved into one of 81 archetypes (72 pairings plus 9 pure types). The result page uses an archetype slug so the named profile can be shared without storing answers.
