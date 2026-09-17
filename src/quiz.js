@@ -36,7 +36,7 @@ export function scoreAnswers(answers) {
     || TRAITS.indexOf(left) - TRAITS.indexOf(right)
   ));
 
-  const archetype = buildArchetype(ranked[0].id, ranked[1].id, bands[ranked[0].id]);
+  const archetype = buildArchetype(ranked[0].id, ranked[1].id, traits[ranked[0].id] - mean);
 
   const modifierPoles = Object.fromEntries(MODIFIERS.map((modifier) => {
     const total = items

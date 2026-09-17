@@ -2,6 +2,8 @@ import { items, scoreAnswers } from './quiz.js';
 import { ARCHETYPES } from './archetypes.js';
 import { TRAITS, ROLES, MODIFIERS, SCALE } from './traits.js';
 
+const TYPE_COUNT = Object.keys(ARCHETYPES).length;
+
 const root = document.querySelector('#app');
 const slug = new URLSearchParams(window.location.search).get('type');
 const shared = Object.hasOwn(ARCHETYPES, slug) ? ARCHETYPES[slug] : null;
@@ -20,7 +22,7 @@ function header() {
   return `<header class="site-header"><div class="header-inner">
     <button class="brand" data-action="home" aria-label="Court Type home">${ball}<span>Court<span class="brand-slash">.</span>Type</span></button>
     ${nav}
-    <button class="header-cta" data-action="start">Take The Quiz</button>
+    <button class="header-cta" data-action="start"><span class="header-cta-full">Take The </span>Quiz</button>
   </div></header>`;
 }
 
@@ -40,7 +42,7 @@ function landing() {
       </div><div class="hero-foot shell"><span class="micro-label">SCROLL TO EXPLORE</span><span class="hero-rule"></span></div>
     </section>
     <section class="instincts-section" id="instincts" aria-label="How your type works"><div class="shell">
-      <div class="manifesto-intro"><span class="orange-rule"></span><div><h2>Nine traits.<br />Four roles.</h2><p>You rate how often each situation sounds like you, from ${SCALE[0].label.toLowerCase()} to ${SCALE[SCALE.length - 1].label.toLowerCase()}. Nothing is a forced choice between two options: all nine traits are scored on their own, then ranked against the rest of your game. Your two strongest traits name your type, and the role they belong to is what you bring to the floor.</p></div></div>
+      <div class="manifesto-intro"><span class="orange-rule"></span><div><h2>Nine traits.<br />Four roles.</h2><p>You rate how often each situation sounds like you, from ${SCALE[0].label.toLowerCase()} to ${SCALE[SCALE.length - 1].label.toLowerCase()}. Nothing is a forced choice between two options: all nine traits are scored on their own, then ranked against the rest of your game. Your two strongest traits name your type — unless one trait truly stands alone, and then that trait names it by itself. Either way, the role it belongs to is what you bring to the floor.</p></div></div>
       <div class="instinct-grid">${ROLES.map((role, index) => `<article class="instinct-card"><span class="circle-number">${String(index + 1).padStart(2, '0')}</span><h3>${role.label}</h3><p>${TRAITS.filter((trait) => trait.role === role.id).map((trait) => trait.label).join(' · ')}</p></article>`).join('')}</div>
     </div></section>
     <section class="end-cta shell"><button data-action="start"><span class="micro-label">READY?</span><span class="end-cta-line">Start The Quiz <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
@@ -60,13 +62,13 @@ function quiz() {
     <section class="quiz-layout" aria-labelledby="question-title">
       <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="./public/images/basketball-mark-outlined.svg" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
       <div class="quiz-main">
-        <p class="item-stem">${item.stem}</p>
+        <p class="item-stem" id="item-stem">${item.stem}</p>
         <h1 id="question-title" tabindex="-1">${item.action}</h1>
-        <div class="scale" role="radiogroup" aria-label="How often is this you?">
+        <div class="scale" role="radiogroup" aria-labelledby="item-stem question-title">
           ${SCALE.map((point) => {
             const isSelected = selected === point.value;
             const isTabStop = selected ? isSelected : point.value === SCALE[0].value;
-            return `<button class="scale-point ${isSelected ? 'scale-point--selected' : ''}" data-rating="${point.value}" aria-label="${point.label}" role="radio" aria-checked="${isSelected}" tabindex="${isTabStop ? '0' : '-1'}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`;
+            return `<button class="scale-point ${isSelected ? 'scale-point--selected' : ''}" data-rating="${point.value}" role="radio" aria-checked="${isSelected}" tabindex="${isTabStop ? '0' : '-1'}"><span class="scale-dot"></span><span class="scale-label">${point.label}</span></button>`;
           }).join('')}
         </div>
         <div class="quiz-actions"><button class="text-button" data-action="back">${state.index === 0 ? 'Back to start' : 'Previous question'}</button><button class="primary-button primary-button--small" data-action="next" ${selected ? '' : 'disabled'}>${state.index === items.length - 1 ? 'See my type' : 'Next play'} ${arrow}</button></div>
@@ -93,8 +95,8 @@ function result() {
     ${header()}
     <main class="shell">
     <section class="result-lead" aria-labelledby="result-title">
-      <div class="result-left"><p class="result-tag">${lead}</p><p class="result-code">${archetype.tagline}</p><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : 'ONE OF EIGHTY-ONE COURT TYPES'}</p></div>
-      <div class="result-right"><h1 id="result-title" tabindex="-1">${archetype.name}</h1><p class="result-role">${roleLabel}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
+      <div class="result-left"><p class="result-tag">${lead}</p><h1 id="result-title" tabindex="-1" class="result-name">${archetype.name}</h1><p class="result-code">${archetype.tagline}</p></div>
+      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${roleLabel}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
     </section>
     <section class="result-details"><div><h2>What you bring<br />to the floor</h2><ul class="strength-list">${archetype.strengths.slice(0, 3).map((strength, index) => `<li><span class="circle-number">${String(index + 1).padStart(2, '0')}</span>${strength}</li>`).join('')}</ul></div>${scorecard}</section>
     <section class="end-cta"><button data-action="${quizAction}"><span class="micro-label">THE BEST TEAMS NEED EVERY TYPE</span><span class="end-cta-line">${profile ? 'Run It Back' : 'Find My Type'} <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
@@ -102,11 +104,51 @@ function result() {
   </div>`;
 }
 
+function updateScaleSelection() {
+  const selected = state.answers[items[state.index].id];
+  root.querySelectorAll('[data-rating]').forEach((button) => {
+    const value = Number(button.dataset.rating);
+    const isSelected = selected === value;
+    const isTabStop = selected ? isSelected : value === SCALE[0].value;
+    button.classList.toggle('scale-point--selected', isSelected);
+    button.setAttribute('aria-checked', String(isSelected));
+    button.tabIndex = isTabStop ? 0 : -1;
+  });
+  const progress = root.querySelector('.quiz-progress');
+  if (progress) progress.value = Object.keys(state.answers).length;
+  const next = root.querySelector('[data-action="next"]');
+  if (next) next.disabled = !selected;
+}
+
 function render(focus = false) {
   if (state.screen === 'landing') landing();
   if (state.screen === 'quiz') quiz();
   if (state.screen === 'result') result();
   if (focus) root.querySelector('h1')?.focus();
+  updateScrollEffects();
+}
+
+const reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let scrollEffectsQueued = false;
+
+function updateScrollEffects() {
+  scrollEffectsQueued = false;
+  const rule = root.querySelector('.hero-rule');
+  const heroImg = root.querySelector('.hero-visual img');
+  const maxScroll = (document.documentElement?.scrollHeight ?? 0) - (window.innerHeight ?? 0);
+  const progress = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+  rule?.style?.setProperty('--scroll-fill', `${progress * 100}%`);
+  if (heroImg?.style && !reducedMotion && window.innerWidth > 700) {
+    heroImg.style.setProperty('--parallax-shift', `${Math.min(window.scrollY * 0.15, 40)}px`);
+  }
+}
+
+if (typeof window.addEventListener === 'function') {
+  window.addEventListener('scroll', () => {
+    if (scrollEffectsQueued) return;
+    scrollEffectsQueued = true;
+    requestAnimationFrame(updateScrollEffects);
+  }, { passive: true });
 }
 
 function clearTypeUrl() {
@@ -127,7 +169,7 @@ root.addEventListener('keydown', (event) => {
     : event.key === 'End' ? SCALE.length - 1
     : (currentIndex + SCALE_STEPS[event.key] + SCALE.length) % SCALE.length;
   state.answers[items[state.index].id] = SCALE[nextIndex].value;
-  quiz();
+  updateScaleSelection();
   root.querySelector(`[data-rating="${SCALE[nextIndex].value}"]`)?.focus();
 });
 
@@ -135,8 +177,8 @@ root.addEventListener('click', async (event) => {
   const rating = event.target.closest('[data-rating]');
   if (rating) {
     state.answers[items[state.index].id] = Number(rating.dataset.rating);
-    quiz();
-    root.querySelector(`[data-rating="${rating.dataset.rating}"]`)?.focus();
+    updateScaleSelection();
+    rating.focus?.();
     return;
   }
 

@@ -5,10 +5,56 @@ import { ARCHETYPES } from '../src/archetypes.js';
 
 async function mount(search = '') {
   const original = { document: globalThis.document, window: globalThis.window };
+  let html = '';
+  function mutateButton(rating, transform) {
+    const marker = `data-rating="${rating}"`;
+    const markerIndex = html.indexOf(marker);
+    const start = html.lastIndexOf('<button', markerIndex);
+    const end = html.indexOf('>', markerIndex) + 1;
+    html = html.slice(0, start) + transform(html.slice(start, end)) + html.slice(end);
+  }
+  function makeButton(rating) {
+    return {
+      dataset: { rating },
+      classList: {
+        toggle(cls, on) {
+          mutateButton(rating, (tag) => {
+            const without = tag.replace(new RegExp(`\\s*${cls}`), '');
+            return on ? without.replace('class="scale-point', `class="scale-point ${cls}`) : without;
+          });
+        },
+      },
+      setAttribute(name, value) {
+        mutateButton(rating, (tag) => tag.replace(new RegExp(`${name}="[^"]*"`), `${name}="${value}"`));
+      },
+      set tabIndex(value) {
+        mutateButton(rating, (tag) => tag.replace(/tabindex="[^"]*"/, `tabindex="${value}"`));
+      },
+      focus() {},
+    };
+  }
   const root = {
-    innerHTML: '',
     addEventListener(name, handler) { this[name] = handler; },
-    querySelector() { return { focus() {}, textContent: '' }; },
+    get innerHTML() { return html; },
+    set innerHTML(value) { html = value; },
+    querySelector(selector) {
+      if (selector === '.quiz-progress') {
+        return { set value(v) { html = html.replace(/(<progress class="quiz-progress" value=")[^"]*/, `$1${v}`); } };
+      }
+      if (selector === '[data-action="next"]') {
+        return {
+          set disabled(v) {
+            if (v) html = html.replace('data-action="next" >', 'data-action="next" disabled>');
+            else html = html.replace('data-action="next" disabled>', 'data-action="next" >');
+          },
+        };
+      }
+      return { focus() {}, textContent: '' };
+    },
+    querySelectorAll(selector) {
+      if (selector !== '[data-rating]') return [];
+      return [...html.matchAll(/data-rating="(\d+)"/g)].map((match) => makeButton(match[1]));
+    },
   };
   let href = `https://court.example/${search}`;
   globalThis.document = { querySelector: () => root };
@@ -72,7 +118,7 @@ test('the quiz renders all five scale points and blocks next until rated', async
   await app.action('start');
   for (const label of ['Never', 'Rarely', 'Sometimes', 'Often', 'Always']) {
     assert.ok(app.root.innerHTML.includes(label), `${label} should render`);
-    assert.match(app.root.innerHTML, new RegExp(`aria-label="${label}"`), `${label} should label its button`);
+    assert.ok(!app.root.innerHTML.includes(`aria-label="${label}"`), `${label} should not need a redundant aria-label`);
   }
   assert.match(app.root.innerHTML, /disabled/);
   await app.action('next');

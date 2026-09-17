@@ -1,6 +1,10 @@
 import { TRAITS } from './traits.js';
 
-const PURE_BANDS = ['Elite', 'Excellent'];
+// A "pure" result requires the primary trait to stand out from the player's own nine-trait
+// mean by at least this much (raw points, trait range 4-20). 'Elite'/'Excellent' band labels
+// were too broad a gate: they fired for ~97% of simulated respondents. This value was chosen
+// so pure fires for roughly 10-20% of realistic respondents; see the sweep in the PR notes.
+export const PURE_DEVIATION_THRESHOLD = 7;
 
 const BASE_NAMES = {
   vision: 'The Orchestrator', shotCreation: 'The Shotmaker', shooting: 'The Sniper',
@@ -287,8 +291,8 @@ function compose(primary, secondary) {
   };
 }
 
-export function buildArchetype(primary, secondary, primaryBand) {
-  if (PURE_BANDS.includes(primaryBand)) return { ...PURE[primary], tier: 'pure' };
+export function buildArchetype(primary, secondary, primaryDeviation) {
+  if (primaryDeviation >= PURE_DEVIATION_THRESHOLD) return { ...PURE[primary], tier: 'pure' };
   const authored = AUTHORED[`${primary}+${secondary}`];
   if (authored) return { ...authored, tier: 'authored' };
   return { ...compose(primary, secondary), tier: 'composed' };
@@ -296,7 +300,7 @@ export function buildArchetype(primary, secondary, primaryBand) {
 
 export const ARCHETYPES = Object.fromEntries(
   TRAITS.flatMap((primary) => [
-    buildArchetype(primary.id, TRAITS.find((trait) => trait.id !== primary.id).id, 'Elite'),
-    ...TRAITS.filter((trait) => trait.id !== primary.id).map((secondary) => buildArchetype(primary.id, secondary.id, 'Strong')),
+    buildArchetype(primary.id, TRAITS.find((trait) => trait.id !== primary.id).id, PURE_DEVIATION_THRESHOLD),
+    ...TRAITS.filter((trait) => trait.id !== primary.id).map((secondary) => buildArchetype(primary.id, secondary.id, 0)),
   ]).map((archetype) => [archetype.slug, archetype]),
 );

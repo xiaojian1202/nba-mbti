@@ -122,3 +122,22 @@ test('tier selection follows the primary band', () => {
   assert.equal(modest.proficiency.shooting, 'Strong');
   assert.ok(['authored', 'composed'].includes(modest.tier));
 });
+
+test('a plausible two-strong-trait profile resolves to a pair archetype, not a pure one', () => {
+  // Everything at 3 except two genuinely strong traits at 5. Under the old Elite/Excellent
+  // gate this primary trait would have banded 'Elite' and wrongly returned a pure result,
+  // discarding the secondary trait. The raised gate requires a much larger standout.
+  const raise = (answers, traitId, value) => {
+    for (const item of items.filter((item) => item.kind === 'trait' && item.key === traitId)) answers[item.id] = value;
+    return answers;
+  };
+  let answers = Object.fromEntries(items.map((item) => [item.id, 3]));
+  answers = raise(answers, 'shooting', 5);
+  answers = raise(answers, 'grit', 4);
+  const profile = scoreAnswers(answers);
+  assert.equal(profile.primary, 'shooting');
+  assert.equal(profile.secondary, 'grit');
+  assert.equal(profile.proficiency.shooting, 'Elite');
+  assert.notEqual(profile.tier, 'pure');
+  assert.ok(['authored', 'composed'].includes(profile.tier));
+});

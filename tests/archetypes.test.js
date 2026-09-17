@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildArchetype, ARCHETYPES } from '../src/archetypes.js';
+import { buildArchetype, ARCHETYPES, PURE_DEVIATION_THRESHOLD } from '../src/archetypes.js';
 import { TRAITS } from '../src/traits.js';
 
 const pairs = TRAITS.flatMap((primary) => TRAITS.filter((trait) => trait.id !== primary.id).map((secondary) => [primary.id, secondary.id]));
@@ -8,7 +8,7 @@ const pairs = TRAITS.flatMap((primary) => TRAITS.filter((trait) => trait.id !== 
 test('there are 72 ordered pairs and every one resolves completely', () => {
   assert.equal(pairs.length, 72);
   for (const [primary, secondary] of pairs) {
-    const archetype = buildArchetype(primary, secondary, 'Strong');
+    const archetype = buildArchetype(primary, secondary, 0);
     assert.ok(archetype.name, `${primary}+${secondary} needs a name`);
     assert.match(archetype.slug, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     assert.equal(archetype.tagline.split(' · ').length, 3, `${primary}+${secondary} needs three descriptors`);
@@ -19,33 +19,33 @@ test('there are 72 ordered pairs and every one resolves completely', () => {
   }
 });
 
-test('a primary in a top band resolves pure, a lower band does not', () => {
-  for (const band of ['Elite', 'Excellent']) {
-    assert.equal(buildArchetype('shooting', 'grit', band).tier, 'pure');
+test('a primary deviation at or above the pure threshold resolves pure, below it does not', () => {
+  for (const deviation of [PURE_DEVIATION_THRESHOLD, PURE_DEVIATION_THRESHOLD + 3]) {
+    assert.equal(buildArchetype('shooting', 'grit', deviation).tier, 'pure');
   }
-  for (const band of ['Strong', 'Solid', 'Developing']) {
-    assert.notEqual(buildArchetype('shooting', 'grit', band).tier, 'pure');
+  for (const deviation of [PURE_DEVIATION_THRESHOLD - 0.01, 2, 0, -5]) {
+    assert.notEqual(buildArchetype('shooting', 'grit', deviation).tier, 'pure');
   }
 });
 
 test('pure depends only on the primary trait', () => {
-  const first = buildArchetype('shooting', 'grit', 'Elite');
-  const second = buildArchetype('shooting', 'vision', 'Elite');
+  const first = buildArchetype('shooting', 'grit', PURE_DEVIATION_THRESHOLD);
+  const second = buildArchetype('shooting', 'vision', PURE_DEVIATION_THRESHOLD);
   assert.equal(first.slug, second.slug);
-  assert.equal(new Set(TRAITS.map((trait) => buildArchetype(trait.id, TRAITS.find((other) => other.id !== trait.id).id, 'Elite').slug)).size, 9);
+  assert.equal(new Set(TRAITS.map((trait) => buildArchetype(trait.id, TRAITS.find((other) => other.id !== trait.id).id, PURE_DEVIATION_THRESHOLD).slug)).size, 9);
 });
 
 test('an authored pair beats composition and an uncurated pair composes', () => {
-  assert.equal(buildArchetype('shooting', 'grit', 'Strong').tier, 'authored');
-  assert.equal(buildArchetype('post', 'shooting', 'Strong').tier, 'composed');
-  assert.equal(buildArchetype('post', 'shooting', 'Strong').name, 'The Deadeye Bruiser');
+  assert.equal(buildArchetype('shooting', 'grit', 0).tier, 'authored');
+  assert.equal(buildArchetype('post', 'shooting', 0).tier, 'composed');
+  assert.equal(buildArchetype('post', 'shooting', 0).name, 'The Deadeye Bruiser');
 });
 
 test('every slug is unique across the full table and round-trips', () => {
   // Object keys dedupe silently, so collisions must be counted before the table is built.
   const built = [
-    ...TRAITS.map((primary) => buildArchetype(primary.id, TRAITS.find((trait) => trait.id !== primary.id).id, 'Elite')),
-    ...pairs.map(([primary, secondary]) => buildArchetype(primary, secondary, 'Strong')),
+    ...TRAITS.map((primary) => buildArchetype(primary.id, TRAITS.find((trait) => trait.id !== primary.id).id, PURE_DEVIATION_THRESHOLD)),
+    ...pairs.map(([primary, secondary]) => buildArchetype(primary, secondary, 0)),
   ];
   const seen = new Map();
   for (const archetype of built) {
@@ -74,7 +74,7 @@ test('the exact thirty authored pairs and nine pure profiles have distinct compl
     'grit+protection', 'grit+post', 'grit+disruption', 'grit+movement',
   ];
   for (const [primary, secondary] of pairs) {
-    assert.equal(buildArchetype(primary, secondary, 'Strong').tier,
+    assert.equal(buildArchetype(primary, secondary, 0).tier,
       authoredPairs.includes(`${primary}+${secondary}`) ? 'authored' : 'composed');
   }
   const profiles = Object.values(ARCHETYPES);
