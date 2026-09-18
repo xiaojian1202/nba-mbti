@@ -8,13 +8,13 @@ export const PURE_DEVIATION_THRESHOLD = 7;
 
 const PURE = {
   vision: {
-    name: 'The Orchestrator', slug: 'orchestrator', tagline: 'Perceptive · Generous · Deliberate',
+    name: 'The Floor General', slug: 'floor-general', tagline: 'Perceptive · Generous · Deliberate',
     role: 'Possession-directing playmaker',
     description: 'You win by seeing how all five defenders fit together and finding the teammate their coverage leaves open. Your passes arrive before that opening closes, turning a crowded possession into a clear decision for someone else.',
     strengths: ['Anticipates help rotations', 'Delivers timely passes', 'Connects the whole floor'],
   },
   shotCreation: {
-    name: 'The Shotmaker', slug: 'shotmaker', tagline: 'Inventive · Elusive · Composed',
+    name: 'The Iso Assassin', slug: 'iso-assassin', tagline: 'Inventive · Elusive · Composed',
     role: 'Off-the-dribble advantage creator',
     description: 'You create a workable shot when the first action runs out of room. Changes of pace, footwork, and counters move your defender just far enough to give you a clean release.',
     strengths: ['Creates shooting separation', 'Counters tight coverage', 'Rescues stalled possessions'],
@@ -76,7 +76,7 @@ const BLENDS = {
     strengths: ['Anticipates defensive help', 'Shifts defenders with the handle', 'Delivers advantage passes'],
   },
   'vision+shooting': {
-    name: 'The Closeout Punisher', slug: 'closeout-punisher', tagline: 'Ready · Immediate · Selective',
+    name: 'The Gravity Guard', slug: 'gravity-guard', tagline: 'Ready · Immediate · Selective',
     role: 'Shooting-first perimeter decision maker',
     description: 'You make defenders rush at the catch because an open jumper is your first punishment. When the closeout takes that shot away, you recognize the teammate it exposes and move the ball before the defense resets.',
     strengths: ['Makes defenders honor the catch', 'Reads aggressive closeouts', 'Finds the extra pass'],
@@ -88,7 +88,7 @@ const BLENDS = {
     strengths: ['Attacks gaps to draw help', 'Reads the rotation mid-drive', 'Delivers from inside the paint'],
   },
   'vision+post': {
-    name: 'The High-Post Hub', slug: 'high-post-hub', tagline: 'Patient · Perceptive · Grounded',
+    name: 'The High-Post Distributor', slug: 'high-post-distributor', tagline: 'Patient · Perceptive · Grounded',
     role: 'Interior scorer who passes from the elbow',
     description: 'You catch where you can see the whole floor and score over a defender who plays you honestly. Cutters read off your shoulders, so the defense has to choose between your close finish and the teammate breaking behind it.',
     strengths: ['Scores from interior position', 'Feeds cutters from the elbow', 'Holds the defense with the catch'],
@@ -172,13 +172,13 @@ const BLENDS = {
     strengths: ['Finishes from the low block', 'Pulls a rim protector out', 'Converts open jumpers'],
   },
   'shooting+disruption': {
-    name: 'The Spot-Up Hawk', slug: 'spot-up-hawk', tagline: 'Ready · Alert · Opportunistic',
+    name: 'The 3-D Hawk', slug: '3-d-hawk', tagline: 'Ready · Alert · Opportunistic',
     role: 'Floor spacer who hunts the ball on defense',
     description: 'You space the floor and punish the defense the moment it leaves you, so your man cannot help freely. At the other end you play the passing lanes with the same readiness, jumping routes and turning a deflection straight into offense.',
     strengths: ['Converts open jumpers', 'Jumps predictable passing lanes', 'Runs the floor after takeaways'],
   },
   'shooting+protection': {
-    name: 'The Rim and Range', slug: 'rim-and-range', tagline: 'Imposing · Accurate · Disciplined',
+    name: 'The Rim Ranger', slug: 'rim-ranger', tagline: 'Imposing · Accurate · Disciplined',
     role: 'Back-line defender who spaces the floor',
     description: 'You guard the basket and make finishers change their shot, giving your teammates room to gamble. On offense you stand where a rim protector has to follow you, so the paint your defense just owned becomes the paint your offense can use.',
     strengths: ['Deters finishes at the rim', 'Spaces the floor from range', 'Drags a defensive anchor out'],
@@ -202,7 +202,7 @@ const BLENDS = {
     strengths: ['Drives into interior space', 'Maintains balance through contact', 'Pivots into close finishes'],
   },
   'slashing+disruption': {
-    name: 'The Steal and Go', slug: 'steal-and-go', tagline: 'Disruptive · Aggressive · Swift',
+    name: 'The Pickpocket Train', slug: 'pickpocket-train', tagline: 'Disruptive · Aggressive · Swift',
     role: 'Ball disruptor who converts takeaways',
     description: 'Your first job is to break up the handle or jump the passing window before the offense can settle. Once you win the ball, your driving ability turns that defensive disruption into a direct attack on the opposite rim.',
     strengths: ['Interrupts vulnerable passes', 'Forces live-ball mistakes', 'Drives immediately after takeaways'],
@@ -244,7 +244,7 @@ const BLENDS = {
     strengths: ['Finishes deep interior catches', 'Screens into quick seals', 'Cuts behind fronting defenders'],
   },
   'post+grit': {
-    name: 'The Scrap-Heap Scorer', slug: 'scrap-heap-scorer', tagline: 'Tenacious · Physical · Patient',
+    name: 'The Scrap Baller', slug: 'scrap-baller', tagline: 'Tenacious · Physical · Patient',
     role: 'Extra-possession worker with a post finish',
     description: 'You earn your touches by battling for position, chasing misses, and keeping broken plays alive. Once that effort puts the ball in your hands near the basket, your post footwork turns a scrappy recovery into a controlled finish.',
     strengths: ['Wins contested second chances', 'Holds ground on the glass', 'Settles recoveries into post finishes'],
