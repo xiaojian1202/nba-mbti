@@ -148,6 +148,23 @@ test('a shared link shows the archetype without claiming the visitor answered', 
   app.cleanup();
 });
 
+test('the lean bar appears for a scored result and not for a shared link', async () => {
+  const app = await mount();
+  await app.action('start');
+  for (let index = 0; index < items.length; index++) {
+    await app.rate((index * 4) % 5 + 1);
+    await app.action('next');
+  }
+  const slug = new URL(app.href).searchParams.get('type');
+  assert.match(app.root.innerHTML, /class="result-lean"/, 'a scored result shows how far it leans');
+  assert.match(app.root.innerHTML, /class="trait-fill" style="width:\d/, 'the lean bar is filled to the primary share');
+  app.cleanup();
+
+  const shared = await mount(`?type=${slug}`);
+  assert.ok(!shared.root.innerHTML.includes('result-lean'), 'a shared link has no scores, so no lean');
+  shared.cleanup();
+});
+
 test('the role shown after taking the quiz matches the role shown on the shared link for the same result', async () => {
   const app = await mount();
   await app.action('start');

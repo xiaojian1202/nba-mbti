@@ -85,6 +85,11 @@ function result() {
     <div class="trait-list">${[...TRAITS].sort((left, right) => profile.traits[right.id] - profile.traits[left.id]).map((trait) => `<div class="trait-row"><span class="trait-label">${trait.label}</span><span class="trait-bar"><span class="trait-fill" style="width:${((profile.traits[trait.id] - 4) / 16) * 100}%"></span></span><strong class="trait-band">${profile.proficiency[trait.id]}</strong></div>`).join('')}</div>
     <div class="modifier-list">${MODIFIERS.map((modifier) => `<p><span class="micro-label">${modifier.label}</span> ${modifier.names[modifier.poles.indexOf(profile[modifier.id])]}</p>`).join('')}</div>
   </div>` : '';
+  const leanBar = profile ? `<div class="result-lean">
+    <span class="micro-label">${TRAITS.find((trait) => trait.id === profile.primary).label}</span>
+    <span class="trait-bar"><span class="trait-fill" style="width:${profile.lean * 100}%"></span></span>
+    <span class="micro-label">${TRAITS.find((trait) => trait.id === profile.secondary).label}</span>
+  </div>` : '';
   const lead = profile ? 'YOUR SCOUTING REPORT IS IN.' : 'A COURT TYPE.';
   const quizAction = profile ? 'restart' : 'start';
   const quizLabel = profile ? 'Take it again' : 'Find my court type';
@@ -94,7 +99,7 @@ function result() {
     <main class="shell">
     <section class="result-lead" aria-labelledby="result-title">
       <div class="result-left"><p class="result-tag">${lead}</p><h1 id="result-title" tabindex="-1" class="result-name">${archetype.name}</h1><p class="result-code">${archetype.tagline}</p></div>
-      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${archetype.role}</p><p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
+      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${archetype.role}</p>${leanBar}<p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
     </section>
     <section class="result-details"><div><h2>What you bring<br />to the floor</h2><ul class="strength-list">${archetype.strengths.slice(0, 3).map((strength, index) => `<li><span class="circle-number">${String(index + 1).padStart(2, '0')}</span>${strength}</li>`).join('')}</ul></div>${scorecard}</section>
     <section class="end-cta"><button data-action="${quizAction}"><span class="micro-label">THE BEST TEAMS NEED EVERY TYPE</span><span class="end-cta-line">${profile ? 'Run It Back' : 'Find My Type'} <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
