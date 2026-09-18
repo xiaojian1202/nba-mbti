@@ -93,6 +93,7 @@ button:focus-visible{outline:2px solid var(--coral-500);outline-offset:4px}
 .result-code{margin:0;color:var(--coral-500);font:600 clamp(18px,2vw,24px)/1.4 var(--font-display);letter-spacing:-.01em}
 .result-right{padding:72px 0 65px 10%;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-width:0}
 .result-role{margin:0 0 20px;color:var(--coral-500);font-size:17px;font-weight:600}
+.result-lean{width:100%;max-width:400px;margin:0 0 24px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
 .result-description{max-width:620px;margin:0;font-size:16px;line-height:1.7}
 .result-actions{display:flex;flex-wrap:wrap;align-items:center;gap:24px;margin-top:28px}
 .share-status{min-height:20px;margin:14px 0 0;color:var(--paper-100);font-size:13px}

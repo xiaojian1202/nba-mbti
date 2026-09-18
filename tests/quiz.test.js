@@ -120,7 +120,7 @@ test('tier selection follows the primary band', () => {
   answers[items.find((item) => item.kind === 'trait' && item.key === 'shooting').id] = 5;
   const modest = scoreAnswers(answers);
   assert.equal(modest.proficiency.shooting, 'Strong');
-  assert.ok(['authored', 'composed'].includes(modest.tier));
+  assert.equal(modest.tier, 'blend');
 });
 
 test('a plausible two-strong-trait profile resolves to a pair archetype, not a pure one', () => {
@@ -139,5 +139,28 @@ test('a plausible two-strong-trait profile resolves to a pair archetype, not a p
   assert.equal(profile.secondary, 'grit');
   assert.equal(profile.proficiency.shooting, 'Elite');
   assert.notEqual(profile.tier, 'pure');
-  assert.ok(['authored', 'composed'].includes(profile.tier));
+  assert.equal(profile.tier, 'blend');
+});
+
+test('lean measures the primary trait against the secondary, and ignores their order', () => {
+  const raise = (answers, traitId, value) => {
+    for (const item of items.filter((item) => item.kind === 'trait' && item.key === traitId)) answers[item.id] = value;
+    return answers;
+  };
+  let answers = Object.fromEntries(items.map((item) => [item.id, 3]));
+  answers = raise(answers, 'shooting', 5);
+  answers = raise(answers, 'grit', 4);
+  const lopsided = scoreAnswers(answers);
+  assert.equal(lopsided.lean, lopsided.traits.shooting / (lopsided.traits.shooting + lopsided.traits.grit));
+  assert.ok(lopsided.lean > 0.5 && lopsided.lean < 1);
+
+  // Swapping which of the two is stronger keeps the same archetype and mirrors the lean.
+  let swapped = Object.fromEntries(items.map((item) => [item.id, 3]));
+  swapped = raise(swapped, 'grit', 5);
+  swapped = raise(swapped, 'shooting', 4);
+  const mirrored = scoreAnswers(swapped);
+  assert.equal(mirrored.primary, 'grit');
+  assert.equal(mirrored.secondary, 'shooting');
+  assert.equal(mirrored.slug, lopsided.slug, 'order must not change the archetype');
+  assert.equal(mirrored.lean, lopsided.lean, 'the mirrored profile leans as far the other way');
 });

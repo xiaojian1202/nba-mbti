@@ -49,6 +49,9 @@ export function scoreAnswers(answers) {
     role: strongestRole.id,
     primary: ranked[0].id,
     secondary: ranked[1].id,
+    // The primary's share of the top two traits. Order no longer picks the archetype, so this
+    // is what distinguishes a lopsided pairing from a balanced one.
+    lean: traits[ranked[0].id] / (traits[ranked[0].id] + traits[ranked[1].id]),
     tier: archetype.tier,
     archetype,
     slug: archetype.slug,
