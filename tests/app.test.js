@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { items } from '../src/quiz.js';
 import { ARCHETYPES } from '../src/archetypes.js';
 
-async function mount(search = '') {
+const slugOf = (href) => new URL(href).pathname.match(/\/t\/([^/]+)\/$/)?.[1];
+
+async function mount(path = '') {
   const original = { document: globalThis.document, window: globalThis.window };
   let html = '';
   function mutateButton(rating, transform) {
@@ -56,10 +58,10 @@ async function mount(search = '') {
       return [...html.matchAll(/data-rating="(\d+)"/g)].map((match) => makeButton(match[1]));
     },
   };
-  let href = `https://court.example/${search}`;
+  let href = `https://court.example/${path}`;
   globalThis.document = { querySelector: () => root };
   globalThis.window = {
-    location: { get href() { return href; }, get search() { return new URL(href).search; } },
+    location: { get href() { return href; }, get pathname() { return new URL(href).pathname; }, get search() { return new URL(href).search; } },
     history: { replaceState(_state, _title, url) { href = String(url); } },
     scrollTo() {},
   };
@@ -74,20 +76,28 @@ async function mount(search = '') {
   };
 }
 
-test('a known slug loads its archetype and an unknown slug returns to landing', async () => {
+test('a known slug path loads its archetype and an unknown slug returns to landing', async () => {
   const slug = Object.keys(ARCHETYPES)[0];
-  const known = await mount(`?type=${slug}`);
-  assert.match(known.root.innerHTML, /result/);
+  const known = await mount(`t/${slug}/`);
+  assert.match(known.root.innerHTML, /page--result/);
   assert.ok(known.root.innerHTML.includes(ARCHETYPES[slug].name));
   known.cleanup();
 
-  const unknown = await mount('?type=not-a-real-type');
-  assert.match(unknown.root.innerHTML, /page--landing/);
-  unknown.cleanup();
+  for (const path of ['t/not-a-real-type/', 't/toString/', '?type=not-a-real-type', '?type=toString']) {
+    const unknown = await mount(path);
+    assert.match(unknown.root.innerHTML, /page--landing/, path);
+    unknown.cleanup();
+  }
+});
 
-  const prototype = await mount('?type=toString');
-  assert.match(prototype.root.innerHTML, /page--landing/);
-  prototype.cleanup();
+test('a legacy ?type= link renders its archetype and moves to the canonical t/<slug>/ url', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const legacy = await mount(`?type=${slug}`);
+  assert.match(legacy.root.innerHTML, /page--result/);
+  assert.ok(legacy.root.innerHTML.includes(ARCHETYPES[slug].name));
+  assert.equal(slugOf(legacy.href), slug);
+  assert.equal(new URL(legacy.href).search, '');
+  legacy.cleanup();
 });
 
 test('rendered images resolve from the module, not the page url, so nested pages load them', async () => {
@@ -115,7 +125,7 @@ test('answering every item reaches a result and writes its slug to the url', asy
     await app.action('next');
   }
   assert.match(app.root.innerHTML, /page--result/);
-  const slug = new URL(app.href).searchParams.get('type');
+  const slug = slugOf(app.href);
   assert.ok(ARCHETYPES[slug], `${slug} should be a known archetype`);
   app.cleanup();
 });
@@ -172,12 +182,12 @@ test('the lean bar appears for a scored result and not for a shared link', async
     await app.rate((index * 4) % 5 + 1);
     await app.action('next');
   }
-  const slug = new URL(app.href).searchParams.get('type');
+  const slug = slugOf(app.href);
   assert.match(app.root.innerHTML, /class="result-lean"/, 'a scored result shows how far it leans');
   assert.match(app.root.innerHTML, /class="trait-fill" style="width:\d/, 'the lean bar is filled to the primary share');
   app.cleanup();
 
-  const shared = await mount(`?type=${slug}`);
+  const shared = await mount(`t/${slug}/`);
   assert.ok(!shared.root.innerHTML.includes('result-lean'), 'a shared link has no scores, so no lean');
   shared.cleanup();
 });
@@ -189,11 +199,11 @@ test('the role shown after taking the quiz matches the role shown on the shared 
     await app.rate((index * 4) % 5 + 1);
     await app.action('next');
   }
-  const slug = new URL(app.href).searchParams.get('type');
+  const slug = slugOf(app.href);
   const freshRoleMatch = app.root.innerHTML.match(/<p class="result-role">(.*?)<\/p>/);
   app.cleanup();
 
-  const shared = await mount(`?type=${slug}`);
+  const shared = await mount(`t/${slug}/`);
   const sharedRoleMatch = shared.root.innerHTML.match(/<p class="result-role">(.*?)<\/p>/);
   shared.cleanup();
 

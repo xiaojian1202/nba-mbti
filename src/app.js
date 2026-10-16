@@ -5,8 +5,13 @@ import { TRAITS, ROLES, MODIFIERS, SCALE } from './traits.js';
 const TYPE_COUNT = Object.keys(ARCHETYPES).length;
 
 const root = document.querySelector('#app');
-const slug = new URLSearchParams(window.location.search).get('type');
+// The site root is the directory above src/, so URLs stay correct at a domain root or a subpath.
+const siteRoot = new URL('../', import.meta.url);
+const pathSlug = window.location.pathname.match(/\/t\/([^/]+)\/?$/)?.[1];
+const slug = pathSlug ?? new URLSearchParams(window.location.search).get('type');
 const shared = Object.hasOwn(ARCHETYPES, slug) ? ARCHETYPES[slug] : null;
+// Legacy ?type= links move to the canonical t/<slug>/ page.
+if (shared && !pathSlug) updateTypeUrl(slug);
 const state = {
   screen: shared ? 'result' : 'landing',
   index: 0,
@@ -174,10 +179,7 @@ if (typeof window.addEventListener === 'function') {
 }
 
 function updateTypeUrl(slug) {
-  const url = new URL(window.location.href);
-  if (slug) url.searchParams.set('type', slug);
-  else url.searchParams.delete('type');
-  window.history.replaceState({}, '', url);
+  window.history.replaceState({}, '', new URL(slug ? `t/${slug}/` : '', siteRoot));
 }
 
 const SCALE_STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
