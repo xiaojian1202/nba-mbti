@@ -15,7 +15,9 @@ const state = {
   archetype: shared,
   navSection: 0,
 };
-const ball = `<img class="brand-ball" src="./public/images/basketball-mark-outlined.svg" alt="" />`;
+// Resolved from this module, not the page, so pages nested under t/<slug>/ load the same files.
+const asset = (name) => new URL(`../public/images/${name}`, import.meta.url).href;
+const ball = `<img class="brand-ball" src="${asset('basketball-mark-outlined.svg')}" alt="" />`;
 const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
 
 function header() {
@@ -33,8 +35,8 @@ function landing() {
   root.innerHTML = `<div class="page page--landing">
     ${header()}
     <main><section class="hero" id="overview" aria-labelledby="hero-title">
-      <div class="hero-visual"><img src="./public/images/hero-basketball.jpg" alt="Basketball player rising toward the hoop" fetchpriority="high" /></div>
-      <img class="hero-ghost" src="./public/images/basketball-mark-outlined.svg" alt="" />
+      <div class="hero-visual"><img src="${asset('hero-basketball.jpg')}" alt="Basketball player rising toward the hoop" fetchpriority="high" /></div>
+      <img class="hero-ghost" src="${asset('basketball-mark-outlined.svg')}" alt="" />
       <div class="hero-copy shell"><p class="micro-label">Basketball Personality Test</p><h1 id="hero-title">What's<br />your <em>game?</em></h1>
         <p class="hero-intro">Every player brings something different to the court. Find the instincts that make your game yours.</p>
         <button class="primary-button" data-action="start">Find my court type ${arrow}</button>
@@ -59,7 +61,7 @@ function quiz() {
     <div class="quiz-topline"><span>THE SCOUTING REPORT</span><span>QUESTION ${n} / ${items.length}</span></div>
     <progress class="quiz-progress" value="${Object.keys(state.answers).length}" max="${items.length}" aria-label="Quiz progress"></progress>
     <section class="quiz-layout" aria-labelledby="question-title">
-      <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="./public/images/basketball-mark-outlined.svg" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
+      <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="${asset('basketball-mark-outlined.svg')}" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
       <div class="quiz-main">
         <p class="item-stem" id="item-stem">${item.stem}</p>
         <h1 id="question-title" tabindex="-1">${item.action}</h1>

@@ -90,6 +90,23 @@ test('a known slug loads its archetype and an unknown slug returns to landing', 
   prototype.cleanup();
 });
 
+test('rendered images resolve from the module, not the page url, so nested pages load them', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const landing = await mount();
+  const landingHtml = landing.root.innerHTML;
+  await landing.action('start');
+  const quizHtml = landing.root.innerHTML;
+  landing.cleanup();
+  const shared = await mount(`?type=${slug}`);
+  const resultHtml = shared.root.innerHTML;
+  shared.cleanup();
+
+  for (const html of [landingHtml, quizHtml, resultHtml]) {
+    assert.doesNotMatch(html, /src="\.\/public\//);
+    assert.match(html, /src="file:\/\/[^"]*\/public\/images\/basketball-mark-outlined\.svg"/);
+  }
+});
+
 test('answering every item reaches a result and writes its slug to the url', async () => {
   const app = await mount();
   await app.action('start');
