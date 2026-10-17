@@ -176,6 +176,21 @@ if (typeof window.addEventListener === 'function') {
     scrollEffectsQueued = true;
     requestAnimationFrame(updateScrollEffects);
   }, { passive: true });
+  // Forward moves push history entries; every backward move (button or gesture) arrives here.
+  window.addEventListener('popstate', (event) => {
+    if (event.state?.screen === 'quiz') {
+      state.screen = 'quiz';
+      state.index = Math.min(event.state.index, Object.keys(state.answers).length);
+    } else if (event.state?.screen === 'result' && state.profile) {
+      state.screen = 'result';
+      state.archetype = state.profile.archetype;
+    } else {
+      const pathSlug = window.location.pathname.match(/\/t\/([^/]+)\/?$/)?.[1];
+      state.archetype = Object.hasOwn(ARCHETYPES, pathSlug) ? ARCHETYPES[pathSlug] : null;
+      state.screen = state.archetype ? 'result' : 'landing';
+    }
+    render(true);
+  });
 }
 
 function updateTypeUrl(slug) {
@@ -220,25 +235,27 @@ root.addEventListener('click', async (event) => {
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
-    updateTypeUrl(null);
+    window.history.pushState({ screen: 'quiz', index: 0 }, '', siteRoot);
   } else if (action === 'home') {
     state.screen = 'landing';
     state.profile = null;
     state.archetype = null;
-    updateTypeUrl(null);
+    window.history.pushState({}, '', siteRoot);
   } else if (action === 'back') {
-    if (state.index === 0) state.screen = 'landing';
-    else state.index -= 1;
+    window.history.back();
+    return;
   } else if (action === 'next') {
     if (!state.answers[items[state.index].id]) return;
-    if (state.index < items.length - 1) state.index += 1;
-    else {
+    if (state.index < items.length - 1) {
+      state.index += 1;
+      window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
+    } else {
       const profile = scoreAnswers(state.answers);
       if (!profile) return;
       state.profile = profile;
       state.archetype = profile.archetype;
       state.screen = 'result';
-      updateTypeUrl(profile.slug);
+      window.history.pushState({ screen: 'result' }, '', new URL(`t/${profile.slug}/`, siteRoot));
     }
   } else if (action === 'share') {
     const status = root.querySelector('#share-status');

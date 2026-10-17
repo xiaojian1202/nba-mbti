@@ -59,15 +59,37 @@ async function mount(path = '') {
     },
   };
   let href = `https://court.example/${path}`;
+  const entries = [{ state: null, url: href }];
+  let position = 0;
+  const listeners = {};
+  const history = {
+    get length() { return entries.length; },
+    get state() { return entries[position].state; },
+    pushState(state, _title, url) {
+      entries.splice(position + 1);
+      entries.push({ state, url: String(url) });
+      position += 1;
+      href = String(url);
+    },
+    replaceState(state, _title, url) { entries[position] = { state, url: String(url) }; href = String(url); },
+    back() {
+      if (position === 0) return;
+      position -= 1;
+      href = entries[position].url;
+      listeners.popstate?.({ state: entries[position].state });
+    },
+  };
   globalThis.document = { querySelector: () => root };
   globalThis.window = {
     location: { get href() { return href; }, get pathname() { return new URL(href).pathname; }, get search() { return new URL(href).search; } },
-    history: { replaceState(_state, _title, url) { href = String(url); } },
+    history,
+    addEventListener(name, handler) { listeners[name] = handler; },
     scrollTo() {},
   };
   await import(`../src/app.js?test=${Math.random()}`);
   return {
     root,
+    history,
     get href() { return href; },
     async rate(value) { await root.click({ target: { closest: (selector) => selector === '[data-rating]' ? { dataset: { rating: String(value) } } : null } }); },
     async action(name) { await root.click({ target: { closest: (selector) => selector === '[data-action]' ? { dataset: { action: name } } : null } }); },
@@ -269,4 +291,78 @@ test('the landing and result screens still show the Overview/Instincts nav', asy
 
   app.cleanup();
   shared.cleanup();
+});
+
+async function answer(app, count) {
+  for (let index = 0; index < count; index++) {
+    await app.rate(index % 5 + 1);
+    await app.action('next');
+  }
+}
+
+test('back from question n returns to question n-1 with answers kept', async () => {
+  const app = await mount();
+  await app.action('start');
+  await answer(app, 3);
+  assert.ok(app.root.innerHTML.includes('QUESTION 04'));
+  app.history.back();
+  assert.ok(app.root.innerHTML.includes('QUESTION 03'));
+  assert.match(app.root.innerHTML, /data-rating="3"[^>]*aria-checked="true"/, 'the answer to question 3 is kept');
+  assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="3"/);
+  app.cleanup();
+});
+
+test('back from the first question returns to the landing page', async () => {
+  const app = await mount();
+  await app.action('start');
+  assert.ok(app.root.innerHTML.includes('QUESTION 01'));
+  app.history.back();
+  assert.match(app.root.innerHTML, /page--landing/);
+  assert.equal(app.href, 'https://court.example/');
+  app.cleanup();
+});
+
+test('the previous-question button and the back gesture produce the same screen', async () => {
+  const viaButton = await mount();
+  await viaButton.action('start');
+  await answer(viaButton, 2);
+  await viaButton.action('back');
+  const buttonHtml = viaButton.root.innerHTML;
+  viaButton.cleanup();
+
+  const viaGesture = await mount();
+  await viaGesture.action('start');
+  await answer(viaGesture, 2);
+  viaGesture.history.back();
+  const gestureHtml = viaGesture.root.innerHTML;
+  viaGesture.cleanup();
+
+  assert.ok(buttonHtml.includes('QUESTION 02'));
+  assert.equal(buttonHtml, gestureHtml);
+});
+
+test('finishing the quiz pushes the result as a new history entry', async () => {
+  const app = await mount();
+  await app.action('start');
+  await answer(app, items.length - 1);
+  await app.rate(4);
+  const before = app.history.length;
+  await app.action('next');
+  assert.match(app.root.innerHTML, /page--result/);
+  assert.equal(app.history.length, before + 1);
+  assert.deepEqual(app.history.state, { screen: 'result' });
+  assert.ok(ARCHETYPES[slugOf(app.href)]);
+  app.cleanup();
+});
+
+test('back from the result returns to the last question', async () => {
+  const app = await mount();
+  await app.action('start');
+  await answer(app, items.length);
+  assert.match(app.root.innerHTML, /page--result/);
+  app.history.back();
+  assert.match(app.root.innerHTML, /page--quiz/);
+  assert.ok(app.root.innerHTML.includes(`QUESTION ${String(items.length).padStart(2, '0')}`));
+  assert.equal(slugOf(app.href), undefined);
+  app.cleanup();
 });
