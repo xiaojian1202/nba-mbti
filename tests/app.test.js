@@ -5,7 +5,22 @@ import { ARCHETYPES } from '../src/archetypes.js';
 
 const slugOf = (href) => new URL(href).pathname.match(/\/t\/([^/]+)\/$/)?.[1];
 
-async function mount(path = '') {
+function memoryStorage(initial = {}) {
+  const data = { ...initial };
+  return {
+    getItem: (key) => (Object.hasOwn(data, key) ? data[key] : null),
+    setItem(key, value) { data[key] = String(value); },
+    removeItem(key) { delete data[key]; },
+  };
+}
+
+const throwingStorage = {
+  getItem() { throw new Error('storage denied'); },
+  setItem() { throw new Error('storage denied'); },
+  removeItem() { throw new Error('storage denied'); },
+};
+
+async function mount(path = '', { sessionStorage = memoryStorage() } = {}) {
   const original = { document: globalThis.document, window: globalThis.window };
   let html = '';
   function mutateButton(rating, transform) {
@@ -83,6 +98,7 @@ async function mount(path = '') {
   globalThis.window = {
     location: { get href() { return href; }, get pathname() { return new URL(href).pathname; }, get search() { return new URL(href).search; } },
     history,
+    sessionStorage,
     addEventListener(name, handler) { listeners[name] = handler; },
     scrollTo() {},
   };
@@ -364,5 +380,94 @@ test('back from the result returns to the last question', async () => {
   assert.match(app.root.innerHTML, /page--quiz/);
   assert.ok(app.root.innerHTML.includes(`QUESTION ${String(items.length).padStart(2, '0')}`));
   assert.equal(slugOf(app.href), undefined);
+  app.cleanup();
+});
+
+test('an unfinished run offers resume; a first visit and a finished run do not', async () => {
+  const storage = memoryStorage();
+  const first = await mount('', { sessionStorage: storage });
+  assert.doesNotMatch(first.root.innerHTML, /data-action="resume"/);
+  await first.action('start');
+  await answer(first, 10);
+  first.cleanup();
+
+  const reload = await mount('', { sessionStorage: storage });
+  assert.match(reload.root.innerHTML, /page--landing/);
+  assert.match(reload.root.innerHTML, /data-action="resume"/);
+  assert.ok(reload.root.innerHTML.includes(`Pick up where you left off — question 11 of ${items.length}`));
+  await reload.action('start');
+  await answer(reload, items.length);
+  assert.match(reload.root.innerHTML, /page--result/);
+  reload.cleanup();
+
+  const afterFinish = await mount('', { sessionStorage: storage });
+  assert.match(afterFinish.root.innerHTML, /page--landing/);
+  assert.doesNotMatch(afterFinish.root.innerHTML, /data-action="resume"/);
+  afterFinish.cleanup();
+});
+
+test('resume restores the saved answers and position', async () => {
+  const uninterrupted = await mount();
+  await uninterrupted.action('start');
+  await answer(uninterrupted, items.length);
+  const expected = { html: uninterrupted.root.innerHTML, href: uninterrupted.href };
+  uninterrupted.cleanup();
+
+  const storage = memoryStorage();
+  const before = await mount('', { sessionStorage: storage });
+  await before.action('start');
+  await answer(before, 10);
+  before.cleanup();
+
+  const app = await mount('', { sessionStorage: storage });
+  await app.action('resume');
+  assert.match(app.root.innerHTML, /page--quiz/);
+  assert.ok(app.root.innerHTML.includes('QUESTION 11'));
+  assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="10"/);
+  assert.deepEqual(app.history.state, { screen: 'quiz', index: 10 });
+  for (let index = 10; index < items.length; index++) {
+    await app.rate(index % 5 + 1);
+    await app.action('next');
+  }
+  assert.equal(app.root.innerHTML, expected.html, 'the first ten answers survived the reload');
+  assert.equal(app.href, expected.href);
+  app.cleanup();
+});
+
+test('a corrupted or invalid saved run is discarded', async () => {
+  const firstVisit = await mount();
+  const firstVisitHtml = firstVisit.root.innerHTML;
+  firstVisit.cleanup();
+  const id = items[0].id;
+
+  const valid = await mount('', { sessionStorage: memoryStorage({ 'court-type:run': JSON.stringify({ answers: { [id]: 3 }, index: 1 }) }) });
+  assert.match(valid.root.innerHTML, /data-action="resume"/, 'a valid run is offered, so the cases below are meaningful');
+  valid.cleanup();
+
+  const invalid = [
+    '{not json',
+    'null',
+    JSON.stringify({ answers: { 'no-such-item': 3 }, index: 0 }),
+    JSON.stringify({ answers: { [id]: 6 }, index: 0 }),
+    JSON.stringify({ answers: { [id]: 3 }, index: items.length }),
+    JSON.stringify({ answers: { [id]: 3 }, index: 5 }),
+  ];
+  for (const saved of invalid) {
+    const app = await mount('', { sessionStorage: memoryStorage({ 'court-type:run': saved }) });
+    assert.equal(app.root.innerHTML, firstVisitHtml, saved);
+    await app.action('resume');
+    assert.match(app.root.innerHTML, /page--landing/, saved);
+    app.cleanup();
+  }
+});
+
+test('the quiz still works when sessionStorage throws', async () => {
+  const app = await mount('', { sessionStorage: throwingStorage });
+  assert.match(app.root.innerHTML, /page--landing/);
+  assert.doesNotMatch(app.root.innerHTML, /data-action="resume"/);
+  await app.action('start');
+  await answer(app, items.length);
+  assert.match(app.root.innerHTML, /page--result/);
+  assert.ok(ARCHETYPES[slugOf(app.href)]);
   app.cleanup();
 });

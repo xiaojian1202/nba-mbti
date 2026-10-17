@@ -25,6 +25,30 @@ const asset = (name) => new URL(`../public/images/${name}`, import.meta.url).hre
 const ball = `<img class="brand-ball" src="${asset('basketball-mark-outlined.svg')}" alt="" />`;
 const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
 
+// An unfinished run survives a reload. Storage can be missing or throw; then there is simply no persistence.
+const RUN_KEY = 'court-type:run';
+const ITEM_IDS = new Set(items.map((item) => item.id));
+function saveRun() {
+  try { window.sessionStorage.setItem(RUN_KEY, JSON.stringify({ answers: state.answers, index: state.index })); } catch {}
+}
+function clearRun() {
+  try { window.sessionStorage.removeItem(RUN_KEY); } catch {}
+}
+function loadRun() {
+  try {
+    const run = JSON.parse(window.sessionStorage.getItem(RUN_KEY));
+    if (!run || typeof run !== 'object' || !run.answers || typeof run.answers !== 'object') return null;
+    const entries = Object.entries(run.answers);
+    const valid = entries.every(([id, value]) => ITEM_IDS.has(id) && Number.isInteger(value) && value >= 1 && value <= 5);
+    const answered = entries.length;
+    if (!valid || answered >= items.length) return null;
+    if (!Number.isInteger(run.index) || run.index < 0 || run.index > items.length - 1 || run.index > answered) return null;
+    return { answers: run.answers, index: run.index };
+  } catch {
+    return null;
+  }
+}
+
 function header() {
   const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview" class="${state.navSection === 0 ? 'header-nav-active' : ''}"><span class="nav-number">1</span>Overview</button><button data-action="instincts" class="${state.navSection === 1 ? 'header-nav-active' : ''}"><span class="nav-number">2</span>Instincts</button></nav>`;
   return `<header class="site-header"><div class="header-inner">
@@ -37,6 +61,7 @@ function header() {
 const footer = `<footer class="site-footer"><span>Court<span class="brand-slash">.</span>Type</span><span>FIND YOUR GAME. TRUST YOUR INSTINCTS.</span><span>BUILT FOR THE LOVE OF THE GAME</span></footer>`;
 
 function landing() {
+  const run = loadRun();
   root.innerHTML = `<div class="page page--landing">
     ${header()}
     <main><section class="hero" id="overview" aria-labelledby="hero-title">
@@ -45,6 +70,7 @@ function landing() {
       <div class="hero-copy shell"><p class="micro-label">Basketball Personality Test</p><h1 id="hero-title">What's<br />your <em>game?</em></h1>
         <p class="hero-intro">Every player brings something different to the court. Find the instincts that make your game yours.</p>
         <button class="primary-button" data-action="start">Find my court type ${arrow}</button>
+        ${run ? `<button class="text-button" data-action="resume">Pick up where you left off — question ${run.index + 1} of ${items.length}</button>` : ''}
       </div><div class="hero-foot shell"><span class="micro-label">SCROLL TO EXPLORE</span><span class="hero-rule"></span></div>
     </section>
     <section class="instincts-section" id="instincts" aria-label="How your type works"><div class="shell">
@@ -181,6 +207,7 @@ if (typeof window.addEventListener === 'function') {
     if (event.state?.screen === 'quiz') {
       state.screen = 'quiz';
       state.index = Math.min(event.state.index, Object.keys(state.answers).length);
+      saveRun();
     } else if (event.state?.screen === 'result' && state.profile) {
       state.screen = 'result';
       state.archetype = state.profile.archetype;
@@ -209,6 +236,7 @@ root.addEventListener('keydown', (event) => {
     : event.key === 'End' ? SCALE.length - 1
     : (currentIndex + SCALE_STEPS[event.key] + SCALE.length) % SCALE.length;
   state.answers[items[state.index].id] = SCALE[nextIndex].value;
+  saveRun();
   updateScaleSelection();
   root.querySelector(`[data-rating="${SCALE[nextIndex].value}"]`)?.focus();
 });
@@ -217,6 +245,7 @@ root.addEventListener('click', async (event) => {
   const rating = event.target.closest('[data-rating]');
   if (rating) {
     state.answers[items[state.index].id] = Number(rating.dataset.rating);
+    saveRun();
     updateScaleSelection();
     rating.focus?.();
     return;
@@ -235,7 +264,17 @@ root.addEventListener('click', async (event) => {
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
+    clearRun();
     window.history.pushState({ screen: 'quiz', index: 0 }, '', siteRoot);
+  } else if (action === 'resume') {
+    const run = loadRun();
+    if (!run) return;
+    state.answers = run.answers;
+    state.index = run.index;
+    state.profile = null;
+    state.archetype = null;
+    state.screen = 'quiz';
+    window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
   } else if (action === 'home') {
     state.screen = 'landing';
     state.profile = null;
@@ -248,6 +287,7 @@ root.addEventListener('click', async (event) => {
     if (!state.answers[items[state.index].id]) return;
     if (state.index < items.length - 1) {
       state.index += 1;
+      saveRun();
       window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
     } else {
       const profile = scoreAnswers(state.answers);
@@ -255,6 +295,7 @@ root.addEventListener('click', async (event) => {
       state.profile = profile;
       state.archetype = profile.archetype;
       state.screen = 'result';
+      clearRun();
       window.history.pushState({ screen: 'result' }, '', new URL(`t/${profile.slug}/`, siteRoot));
     }
   } else if (action === 'share') {
