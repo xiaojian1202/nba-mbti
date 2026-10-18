@@ -1,6 +1,6 @@
 # Court Type
 
-A basketball playing-style quiz with 46 game situations and 81 on-court archetypes. It takes about ten minutes. All scoring happens in the browser; no account or backend is required.
+A basketball playing-style quiz with 46 game situations and 45 on-court archetypes. It takes about ten minutes. All scoring happens in the browser; no account or backend is required.
 
 ## Run locally
 
@@ -14,4 +14,4 @@ Run `SITE_URL=https://your.domain npm run build` to write the static site to `di
 
 ## How it works
 
-Forty-six Likert items measure nine traits across four roles: Creator, Scorer, Defender, and Connector. The two strongest traits form an ordered pair resolved into one of 81 archetypes (72 pairings plus 9 pure types). The result page uses an archetype slug so the named profile can be shared without storing answers.
+Forty-six Likert items measure nine traits across four roles: Creator, Scorer, Defender, and Connector. The two strongest traits form an unordered pair resolved into one of 45 archetypes (36 pairings plus 9 pure types). The result page uses an archetype slug so the named profile can be shared without storing answers.
