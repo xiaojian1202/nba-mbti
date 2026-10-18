@@ -5,8 +5,13 @@ import { TRAITS, ROLES, MODIFIERS, SCALE } from './traits.js';
 const TYPE_COUNT = Object.keys(ARCHETYPES).length;
 
 const root = document.querySelector('#app');
-const slug = new URLSearchParams(window.location.search).get('type');
+// The site root is the directory above src/, so URLs stay correct at a domain root or a subpath.
+const siteRoot = new URL('../', import.meta.url);
+const pathSlug = window.location.pathname.match(/\/t\/([^/]+)\/?$/)?.[1];
+const slug = pathSlug ?? new URLSearchParams(window.location.search).get('type');
 const shared = Object.hasOwn(ARCHETYPES, slug) ? ARCHETYPES[slug] : null;
+// Legacy ?type= links move to the canonical t/<slug>/ page.
+if (shared && !pathSlug) updateTypeUrl(slug);
 const state = {
   screen: shared ? 'result' : 'landing',
   index: 0,
@@ -15,8 +20,34 @@ const state = {
   archetype: shared,
   navSection: 0,
 };
-const ball = `<img class="brand-ball" src="./public/images/basketball-mark-outlined.svg" alt="" />`;
+// Resolved from this module, not the page, so pages nested under t/<slug>/ load the same files.
+const asset = (name) => new URL(`../public/images/${name}`, import.meta.url).href;
+const ball = `<img class="brand-ball" src="${asset('basketball-mark-outlined.svg')}" alt="" />`;
 const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
+
+// An unfinished run survives a reload. Storage can be missing or throw; then there is simply no persistence.
+const RUN_KEY = 'court-type:run';
+const ITEM_IDS = new Set(items.map((item) => item.id));
+function saveRun() {
+  try { window.sessionStorage.setItem(RUN_KEY, JSON.stringify({ answers: state.answers, index: state.index })); } catch {}
+}
+function clearRun() {
+  try { window.sessionStorage.removeItem(RUN_KEY); } catch {}
+}
+function loadRun() {
+  try {
+    const run = JSON.parse(window.sessionStorage.getItem(RUN_KEY));
+    if (!run || typeof run !== 'object' || !run.answers || typeof run.answers !== 'object') return null;
+    const entries = Object.entries(run.answers);
+    const valid = entries.every(([id, value]) => ITEM_IDS.has(id) && Number.isInteger(value) && value >= 1 && value <= 5);
+    const answered = entries.length;
+    if (!valid || answered >= items.length) return null;
+    if (!Number.isInteger(run.index) || run.index < 0 || run.index > items.length - 1 || run.index > answered) return null;
+    return { answers: run.answers, index: run.index };
+  } catch {
+    return null;
+  }
+}
 
 function header() {
   const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview" class="${state.navSection === 0 ? 'header-nav-active' : ''}"><span class="nav-number">1</span>Overview</button><button data-action="instincts" class="${state.navSection === 1 ? 'header-nav-active' : ''}"><span class="nav-number">2</span>Instincts</button></nav>`;
@@ -30,14 +61,16 @@ function header() {
 const footer = `<footer class="site-footer"><span>Court<span class="brand-slash">.</span>Type</span><span>FIND YOUR GAME. TRUST YOUR INSTINCTS.</span><span>BUILT FOR THE LOVE OF THE GAME</span></footer>`;
 
 function landing() {
+  const run = loadRun();
   root.innerHTML = `<div class="page page--landing">
     ${header()}
     <main><section class="hero" id="overview" aria-labelledby="hero-title">
-      <div class="hero-visual"><img src="./public/images/hero-basketball.jpg" alt="Basketball player rising toward the hoop" fetchpriority="high" /></div>
-      <img class="hero-ghost" src="./public/images/basketball-mark-outlined.svg" alt="" />
+      <div class="hero-visual"><img src="${asset('hero-basketball.jpg')}" alt="Basketball player rising toward the hoop" fetchpriority="high" /></div>
+      <img class="hero-ghost" src="${asset('basketball-mark-outlined.svg')}" alt="" />
       <div class="hero-copy shell"><p class="micro-label">Basketball Personality Test</p><h1 id="hero-title">What's<br />your <em>game?</em></h1>
         <p class="hero-intro">Every player brings something different to the court. Find the instincts that make your game yours.</p>
         <button class="primary-button" data-action="start">Find my court type ${arrow}</button>
+        ${run ? `<button class="text-button" data-action="resume">Pick up where you left off — question ${run.index + 1} of ${items.length}</button>` : ''}
       </div><div class="hero-foot shell"><span class="micro-label">SCROLL TO EXPLORE</span><span class="hero-rule"></span></div>
     </section>
     <section class="instincts-section" id="instincts" aria-label="How your type works"><div class="shell">
@@ -59,7 +92,7 @@ function quiz() {
     <div class="quiz-topline"><span>THE SCOUTING REPORT</span><span>QUESTION ${n} / ${items.length}</span></div>
     <progress class="quiz-progress" value="${Object.keys(state.answers).length}" max="${items.length}" aria-label="Quiz progress"></progress>
     <section class="quiz-layout" aria-labelledby="question-title">
-      <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="./public/images/basketball-mark-outlined.svg" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
+      <aside class="quiz-aside"><span class="quiz-aside-label">${n}</span><img src="${asset('basketball-mark-outlined.svg')}" alt="" /><p>There are no wrong reads.<br />Just your reads.</p></aside>
       <div class="quiz-main">
         <p class="item-stem" id="item-stem">${item.stem}</p>
         <h1 id="question-title" tabindex="-1">${item.action}</h1>
@@ -169,13 +202,26 @@ if (typeof window.addEventListener === 'function') {
     scrollEffectsQueued = true;
     requestAnimationFrame(updateScrollEffects);
   }, { passive: true });
+  // Forward moves push history entries; every backward move (button or gesture) arrives here.
+  window.addEventListener('popstate', (event) => {
+    if (event.state?.screen === 'quiz') {
+      state.screen = 'quiz';
+      state.index = Math.min(event.state.index, Object.keys(state.answers).length);
+      saveRun();
+    } else if (event.state?.screen === 'result' && state.profile) {
+      state.screen = 'result';
+      state.archetype = state.profile.archetype;
+    } else {
+      const pathSlug = window.location.pathname.match(/\/t\/([^/]+)\/?$/)?.[1];
+      state.archetype = Object.hasOwn(ARCHETYPES, pathSlug) ? ARCHETYPES[pathSlug] : null;
+      state.screen = state.archetype ? 'result' : 'landing';
+    }
+    render(true);
+  });
 }
 
 function updateTypeUrl(slug) {
-  const url = new URL(window.location.href);
-  if (slug) url.searchParams.set('type', slug);
-  else url.searchParams.delete('type');
-  window.history.replaceState({}, '', url);
+  window.history.replaceState({}, '', new URL(slug ? `t/${slug}/` : '', siteRoot));
 }
 
 const SCALE_STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -190,6 +236,7 @@ root.addEventListener('keydown', (event) => {
     : event.key === 'End' ? SCALE.length - 1
     : (currentIndex + SCALE_STEPS[event.key] + SCALE.length) % SCALE.length;
   state.answers[items[state.index].id] = SCALE[nextIndex].value;
+  saveRun();
   updateScaleSelection();
   root.querySelector(`[data-rating="${SCALE[nextIndex].value}"]`)?.focus();
 });
@@ -198,6 +245,7 @@ root.addEventListener('click', async (event) => {
   const rating = event.target.closest('[data-rating]');
   if (rating) {
     state.answers[items[state.index].id] = Number(rating.dataset.rating);
+    saveRun();
     updateScaleSelection();
     rating.focus?.();
     return;
@@ -216,25 +264,39 @@ root.addEventListener('click', async (event) => {
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
-    updateTypeUrl(null);
+    clearRun();
+    window.history.pushState({ screen: 'quiz', index: 0 }, '', siteRoot);
+  } else if (action === 'resume') {
+    const run = loadRun();
+    if (!run) return;
+    state.answers = run.answers;
+    state.index = run.index;
+    state.profile = null;
+    state.archetype = null;
+    state.screen = 'quiz';
+    window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
   } else if (action === 'home') {
     state.screen = 'landing';
     state.profile = null;
     state.archetype = null;
-    updateTypeUrl(null);
+    window.history.pushState({}, '', siteRoot);
   } else if (action === 'back') {
-    if (state.index === 0) state.screen = 'landing';
-    else state.index -= 1;
+    window.history.back();
+    return;
   } else if (action === 'next') {
     if (!state.answers[items[state.index].id]) return;
-    if (state.index < items.length - 1) state.index += 1;
-    else {
+    if (state.index < items.length - 1) {
+      state.index += 1;
+      saveRun();
+      window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
+    } else {
       const profile = scoreAnswers(state.answers);
       if (!profile) return;
       state.profile = profile;
       state.archetype = profile.archetype;
       state.screen = 'result';
-      updateTypeUrl(profile.slug);
+      clearRun();
+      window.history.pushState({ screen: 'result' }, '', new URL(`t/${profile.slug}/`, siteRoot));
     }
   } else if (action === 'share') {
     const status = root.querySelector('#share-status');
