@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-28 (`feat/cloudflare-pages`; deploy target chosen: Cloudflare Pages at https://court-type.pages.dev).
+Last updated: 2026-10-28 (`feat/cloudflare-pages`, PR #7. Live on Cloudflare Pages at https://court-type.pages.dev since 2026-10-28; production currently runs `main` @ `5bb5f95`, without the `404.html` from #7).
 
 ## Rule: keep this file current
 
@@ -26,7 +26,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 
 CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every push and PR, then uploads `dist/` as an artifact.
 
-**Deploy: Cloudflare Pages**, project `court-type`, at https://court-type.pages.dev. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev`. Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
+**Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev`. Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
 
 ## Map
 
@@ -58,7 +58,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 1. Initial build used forced-choice questions → **five-axis redesign** → **trait/archetype model**.
 2. **Likert instrument** (PRs #1 and #2): 46 Likert items, 9 independent traits scored against the player's own mean, and the NBA Era design system (near-black, coral, Archivo/Barlow/IBM Plex Mono).
 3. **Collapse to unordered pairs** (`fcbfdfd`, PR #3). A+B and B+A had been separate types that differed only in name, so the count went from **81 to 45**. `compose()` and the composed tier were removed; tier is now `'pure' | 'blend'`. `profile.lean` (the primary's share of the top two traits) replaced ordering as the signal for lopsided vs. balanced. 10 old slugs now fall through to the landing page.
-4. **Production readiness P0** (current branch, plan at `docs/superpowers/plans/2026-10-15-production-readiness-p0.md`): module-relative assets, `t/<slug>/` URLs, real history, session resume, a prerender build with og/twitter metadata, and CI. Tasks 1–6 are done, even though the checkboxes in the plan file were never ticked. **Task 7 (deploy):** the host is Cloudflare Pages at `court-type.pages.dev` (no custom domain, chosen to keep it free), with a `404.html` fallback. Real unfurl checks are still pending.
+4. **Production readiness P0** (PRs #5 and #6, plan at `docs/superpowers/plans/2026-10-15-production-readiness-p0.md`): module-relative assets, `t/<slug>/` URLs, real history, session resume, a prerender build with og/twitter metadata, and CI. Tasks 1–6 are done and ticked in the plan. **Task 7 (deploy):** live on Cloudflare Pages at `court-type.pages.dev` since 2026-10-28 (no custom domain, chosen to keep it free). The `404.html` fallback is in PR #7. Real unfurl checks are still pending.
 
 ## Past failures and lessons
 
@@ -69,6 +69,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Relative asset paths broke under `/t/<slug>/`.** The fix was `import.meta.url` resolution. Build-time paths are also rewritten, and `dev.py` strips the `/t/<slug>` prefix so local routing matches production.
 - **Mobile layout deleted content** (`display:none` and `font-size:0` on labels). The fix was to re-lay out instead: the scale stacks vertically at ≤520px.
 - **Stale quiz history entries after reload.** Quiz entries from before a reload, or from an earlier run, carried only `index`, so `popstate` treated them as the current run. Back could skip questions or jump into an abandoned run, and resuming stacked a duplicate entry. The fix was to tag entries with a run id and have `popstate` check it. Tests drive reload → resume/start → back sequences through the harness's `reloadOf`. Rule: history state must identify which run it belongs to, not just a position.
+- **Cloudflare Pages serves `index.html` at unknown paths when no `404.html` exists**, which breaks the page at depth (relative `./` assets). Found while picking the host, before any deploy. The fix was for the build to emit `404.html`, which a test now covers. Rule: before deploying to a new host, check what it does with unknown paths.
+- **The Pages dashboard's "Save and Deploy" failed once** with "An unknown error occurred" and created nothing. A retry worked. Rule: after a failed create, check the project list before retrying, so a half-created project isn't duplicated or renamed.
 
 ## What works well (keep doing it)
 
@@ -80,7 +82,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 
 ## Known open items and stale spots
 
-- Deploy (plan Task 7): Cloudflare Pages, `court-type.pages.dev`. Real unfurl checks still need to be done in Slack or iMessage after the first production deploy.
+- **Until PR #7 merges, production has no `404.html`.** Unknown paths such as the 10 retired slugs (`/t/<old-slug>/`) return 200 with a broken landing page instead of redirecting.
+- Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
 - `og:image` is the same hero image for every type. Per-type images are P2.
 - The proficiency band thresholds have not been calibrated.
 - Remaining P2 items from FIXES.md (touch targets under 44px, WebP/AVIF hero) should be rechecked against current CSS before acting on them.
