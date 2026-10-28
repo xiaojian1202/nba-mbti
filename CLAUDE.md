@@ -85,6 +85,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 
 ## Repo conventions
 
+- `AGENTS.md` is a symlink to this file, for agents that read `AGENTS.md` instead of `CLAUDE.md`. Edit `CLAUDE.md` only; never replace the symlink with a copy, because copies drift.
 - Generated skill and tool artifacts stay on disk but are gitignored: `.claude/`, `.impeccable/`, `.superpowers/`, `graphify-out/`, `.worktrees/`, `dist/`. Gitignore any new tool output. `docs/superpowers/{specs,plans}` is the exception and stays tracked.
 - Ask before outward-facing git actions: opening or merging PRs, pushing to `main`, deploying.
 - Follow the Karpathy guidelines in the global CLAUDE.md: make surgical changes and keep things simple.
