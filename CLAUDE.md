@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-27 (branch `fix/stale-quiz-history`; `production-readiness` merged to `main` as #5).
+Last updated: 2026-10-28 (`main`; production readiness merged as #5, stale-history fix and `AGENTS.md` symlink as #6).
 
 ## Rule: keep this file current
 
