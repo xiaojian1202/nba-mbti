@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-28 (`feat/cloudflare-pages`, PR #7. Live on Cloudflare Pages at https://court-type.pages.dev since 2026-10-28; production currently runs `main` @ `5bb5f95`, without the `404.html` from #7).
+Last updated: 2026-10-28 (`main`; Cloudflare Pages deploy and `404.html` merged as #7, live at https://court-type.pages.dev).
 
 ## Rule: keep this file current
 
@@ -58,7 +58,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 1. Initial build used forced-choice questions → **five-axis redesign** → **trait/archetype model**.
 2. **Likert instrument** (PRs #1 and #2): 46 Likert items, 9 independent traits scored against the player's own mean, and the NBA Era design system (near-black, coral, Archivo/Barlow/IBM Plex Mono).
 3. **Collapse to unordered pairs** (`fcbfdfd`, PR #3). A+B and B+A had been separate types that differed only in name, so the count went from **81 to 45**. `compose()` and the composed tier were removed; tier is now `'pure' | 'blend'`. `profile.lean` (the primary's share of the top two traits) replaced ordering as the signal for lopsided vs. balanced. 10 old slugs now fall through to the landing page.
-4. **Production readiness P0** (PRs #5 and #6, plan at `docs/superpowers/plans/2026-10-15-production-readiness-p0.md`): module-relative assets, `t/<slug>/` URLs, real history, session resume, a prerender build with og/twitter metadata, and CI. Tasks 1–6 are done and ticked in the plan. **Task 7 (deploy):** live on Cloudflare Pages at `court-type.pages.dev` since 2026-10-28 (no custom domain, chosen to keep it free). The `404.html` fallback is in PR #7. Real unfurl checks are still pending.
+4. **Production readiness P0** (PRs #5 and #6, plan at `docs/superpowers/plans/2026-10-15-production-readiness-p0.md`): module-relative assets, `t/<slug>/` URLs, real history, session resume, a prerender build with og/twitter metadata, and CI. Tasks 1–6 are done and ticked in the plan. **Task 7 (deploy):** live on Cloudflare Pages at `court-type.pages.dev` since 2026-10-28 (no custom domain, chosen to keep it free). The `404.html` fallback merged as #7. Real unfurl checks are still pending.
 
 ## Past failures and lessons
 
@@ -82,7 +82,6 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 
 ## Known open items and stale spots
 
-- **Until PR #7 merges, production has no `404.html`.** Unknown paths such as the 10 retired slugs (`/t/<old-slug>/`) return 200 with a broken landing page instead of redirecting.
 - Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
 - `og:image` is the same hero image for every type. Per-type images are P2.
 - The proficiency band thresholds have not been calibrated.
