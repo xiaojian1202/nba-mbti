@@ -20,7 +20,8 @@ const throwingStorage = {
   removeItem() { throw new Error('storage denied'); },
 };
 
-async function mount(path = '', { sessionStorage = memoryStorage() } = {}) {
+// `reloadOf` reloads the page of an earlier mount: the tab keeps its history entries and position.
+async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf } = {}) {
   const original = { document: globalThis.document, window: globalThis.window };
   let html = '';
   function mutateButton(rating, transform) {
@@ -73,9 +74,9 @@ async function mount(path = '', { sessionStorage = memoryStorage() } = {}) {
       return [...html.matchAll(/data-rating="(\d+)"/g)].map((match) => makeButton(match[1]));
     },
   };
-  let href = `https://court.example/${path}`;
-  const entries = [{ state: null, url: href }];
-  let position = 0;
+  const entries = reloadOf ? reloadOf.entries.map((entry) => ({ ...entry })) : [{ state: null, url: `https://court.example/${path}` }];
+  let position = reloadOf ? reloadOf.position : 0;
+  let href = entries[position].url;
   const listeners = {};
   const history = {
     get length() { return entries.length; },
@@ -106,6 +107,8 @@ async function mount(path = '', { sessionStorage = memoryStorage() } = {}) {
   return {
     root,
     history,
+    entries,
+    get position() { return position; },
     get href() { return href; },
     async rate(value) { await root.click({ target: { closest: (selector) => selector === '[data-rating]' ? { dataset: { rating: String(value) } } : null } }); },
     async action(name) { await root.click({ target: { closest: (selector) => selector === '[data-action]' ? { dataset: { action: name } } : null } }); },
@@ -424,7 +427,7 @@ test('resume restores the saved answers and position', async () => {
   assert.match(app.root.innerHTML, /page--quiz/);
   assert.ok(app.root.innerHTML.includes('QUESTION 11'));
   assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="10"/);
-  assert.deepEqual(app.history.state, { screen: 'quiz', index: 10 });
+  assert.deepEqual(app.history.state, { screen: 'quiz', index: 10, run: JSON.parse(storage.getItem('court-type:run')).run });
   for (let index = 10; index < items.length; index++) {
     await app.rate(index % 5 + 1);
     await app.action('next');
@@ -434,13 +437,79 @@ test('resume restores the saved answers and position', async () => {
   app.cleanup();
 });
 
+test('after a reload, going back neither enters the quiz unasked nor erases the saved run', async () => {
+  const storage = memoryStorage();
+  const before = await mount('', { sessionStorage: storage });
+  await before.action('start');
+  await answer(before, 10);
+  before.cleanup();
+
+  const app = await mount('', { sessionStorage: storage, reloadOf: before });
+  while (app.position > 0) {
+    app.history.back();
+    assert.match(app.root.innerHTML, /page--landing/);
+    assert.ok(app.root.innerHTML.includes(`Pick up where you left off — question 11 of ${items.length}`));
+  }
+  assert.equal(Object.keys(JSON.parse(storage.getItem('court-type:run')).answers).length, 10);
+  app.cleanup();
+});
+
+test('after a reload and resume, the previous-question button walks back through the saved answers', async () => {
+  const storage = memoryStorage();
+  const before = await mount('', { sessionStorage: storage });
+  await before.action('start');
+  await answer(before, 10);
+  before.cleanup();
+
+  const app = await mount('', { sessionStorage: storage, reloadOf: before });
+  await app.action('resume');
+  for (let question = 10; question >= 1; question--) {
+    await app.action('back');
+    assert.ok(app.root.innerHTML.includes(`QUESTION ${String(question).padStart(2, '0')}`), `question ${question}`);
+    assert.match(app.root.innerHTML, new RegExp(`data-rating="${(question - 1) % 5 + 1}"[^>]*aria-checked="true"`));
+  }
+  await app.action('back');
+  assert.match(app.root.innerHTML, /page--landing/);
+  app.cleanup();
+});
+
+test('resuming after a reload and a back gesture, the previous question is still one step back', async () => {
+  const storage = memoryStorage();
+  const before = await mount('', { sessionStorage: storage });
+  await before.action('start');
+  await answer(before, 10);
+  before.cleanup();
+
+  const app = await mount('', { sessionStorage: storage, reloadOf: before });
+  app.history.back();
+  await app.action('resume');
+  assert.ok(app.root.innerHTML.includes('QUESTION 11'));
+  await app.action('back');
+  assert.ok(app.root.innerHTML.includes('QUESTION 10'));
+  app.cleanup();
+});
+
+test('starting over after a reload, back from the first question returns to the landing page', async () => {
+  const storage = memoryStorage();
+  const before = await mount('', { sessionStorage: storage });
+  await before.action('start');
+  await answer(before, 10);
+  before.cleanup();
+
+  const app = await mount('', { sessionStorage: storage, reloadOf: before });
+  await app.action('start');
+  await app.action('back');
+  assert.match(app.root.innerHTML, /page--landing/);
+  app.cleanup();
+});
+
 test('a corrupted or invalid saved run is discarded', async () => {
   const firstVisit = await mount();
   const firstVisitHtml = firstVisit.root.innerHTML;
   firstVisit.cleanup();
   const id = items[0].id;
 
-  const valid = await mount('', { sessionStorage: memoryStorage({ 'court-type:run': JSON.stringify({ answers: { [id]: 3 }, index: 1 }) }) });
+  const valid = await mount('', { sessionStorage: memoryStorage({ 'court-type:run': JSON.stringify({ answers: { [id]: 3 }, index: 1, run: 1 }) }) });
   assert.match(valid.root.innerHTML, /data-action="resume"/, 'a valid run is offered, so the cases below are meaningful');
   valid.cleanup();
 
@@ -451,6 +520,7 @@ test('a corrupted or invalid saved run is discarded', async () => {
     JSON.stringify({ answers: { [id]: 6 }, index: 0 }),
     JSON.stringify({ answers: { [id]: 3 }, index: items.length }),
     JSON.stringify({ answers: { [id]: 3 }, index: 5 }),
+    JSON.stringify({ answers: { [id]: 3 }, index: 0 }),
   ];
   for (const saved of invalid) {
     const app = await mount('', { sessionStorage: memoryStorage({ 'court-type:run': saved }) });

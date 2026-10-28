@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-27 (branch `production-readiness`, 11 commits ahead of `main`, pushed).
+Last updated: 2026-10-27 (branch `fix/stale-quiz-history`; `production-readiness` merged to `main` as #5).
 
 ## Rule: keep this file current
 
@@ -20,7 +20,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (54 tests, all passing as of the date above) |
+| `npm test` | `node --test` (58 tests, all passing as of the date above) |
 | `npm run check` | `node --check` on every source and build file |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. |
 
@@ -45,7 +45,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **There are two result modes.** A fresh result has `state.profile` set and shows the scorecard. A shared link shows neutral archetype copy ("ONE OF 45 COURT TYPES") with a path into the quiz. Never present a shared link as the visitor's own result.
 - **The role shown is always `archetype.role`**, the authored phrase. `profile.role`, the highest role mean, must not be used as the archetype's label. That mismatch was the P0 bug, described below.
 - **History.** Forward moves `pushState`, finishing pushes the `t/<slug>/` URL, and one `popstate` listener owns going back. Back from question 1 goes to the landing page and stays on the site.
-- **Resume.** The run is saved to `sessionStorage['court-type:run']` on every change. It is cleared on finish and on start. `loadRun` validates everything: item ids, integer ratings from 1 to 5, the index range, and that the run is incomplete. All storage access sits in try/catch. The landing page offers an explicit "Pick up where you left off" option; a run is never resumed silently.
+- **Resume.** The run is saved to `sessionStorage['court-type:run']` on every change. It is cleared on finish and on start. `loadRun` validates everything: item ids, integer ratings from 1 to 5, the index range, that the run is incomplete, and an integer `run` id. All storage access sits in try/catch. The landing page offers an explicit "Pick up where you left off" option; a run is never resumed silently.
+- **Run ids on history entries.** Each run gets `state.runId` (set on start, restored on resume). Quiz history entries carry it, and `popstate` ignores quiz entries from any other run. Resuming onto the exact entry a reload left behind uses `replaceState`, not `pushState`.
 - **Asset URLs** are resolved from `import.meta.url` (`asset()` and `siteRoot` in `app.js`), not from the page. This keeps them working at any depth, such as `/t/<slug>/`.
 - `TYPE_COUNT` is derived from `ARCHETYPES` and never hard-coded.
 - **The answer scale** is `role="radiogroup"` with radios, roving tabindex, and arrow/Home/End keys.
@@ -65,6 +66,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Stale browser cache in dev.** Plain `python3 -m http.server` let Chrome serve old code, and `?v=N` cache-busting didn't help. `scripts/dev.py` sends `Cache-Control: no-store` and drops ETag and Last-Modified. Keep that property if the dev server is ever replaced.
 - **Relative asset paths broke under `/t/<slug>/`.** The fix was `import.meta.url` resolution. Build-time paths are also rewritten, and `dev.py` strips the `/t/<slug>` prefix so local routing matches production.
 - **Mobile layout deleted content** (`display:none` and `font-size:0` on labels). The fix was to re-lay out instead: the scale stacks vertically at ≤520px.
+- **Stale quiz history entries after reload.** Quiz entries from before a reload, or from an earlier run, carried only `index`, so `popstate` treated them as the current run. Back could skip questions or jump into an abandoned run, and resuming stacked a duplicate entry. The fix was to tag entries with a run id and have `popstate` check it. Tests drive reload → resume/start → back sequences through the harness's `reloadOf`. Rule: history state must identify which run it belongs to, not just a position.
 
 ## What works well (keep doing it)
 
