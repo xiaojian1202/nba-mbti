@@ -2,7 +2,14 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-18 (branch `production-readiness`, 11 commits ahead of `main`, pushed).
+Last updated: 2026-10-27 (branch `production-readiness`, 11 commits ahead of `main`, pushed).
+
+## Rule: keep this file current
+
+- **Every change updates this file, in the same commit.** That covers a feature, a fix, a refactor, a decision, or a new command. Update the relevant sections (Map, Key behaviors, Critical changes, Open items, Commands, test count) and the "Last updated" line. If a change really affects nothing here, say so in the commit body.
+- **Every caught mistake gets an entry under "Past failures and lessons."** That includes your own mistakes, ones a reviewer or the user points out, and ones a failing test exposes. Write what went wrong, the root cause, the fix, and the rule that prevents it from happening again. Where possible, back the rule with a test.
+- Read "Past failures and lessons" before starting work, and don't repeat anything listed there.
+- **Enforced by a hook.** The PreToolUse(Bash) hook `.claude/hooks/require-claude-md.sh`, registered in `.claude/settings.json`, blocks any Claude `git commit` (including `-a`, `-C <dir>`, and chained commands) whose changes don't include `CLAUDE.md`. To opt out, put `CLAUDE.md: no update` and a reason in the commit message. Both files are local only, because `.claude/` is gitignored. The hook doesn't cover commits made outside Claude Code.
 
 ## What it is
 
