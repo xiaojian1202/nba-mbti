@@ -7,3 +7,4 @@ node_modules/
 .impeccable/
 .superpowers/
 graphify-out/
+dist/

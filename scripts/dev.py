@@ -1,8 +1,13 @@
 """Static dev server that never lets the browser cache a response."""
 import http.server
+import re
 
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        # Mirror the built t/<slug>/ pages: serve them, and their relative assets, from the source tree.
+        return super().translate_path(re.sub(r'^/t/[^/?#]+', '', path) or '/')
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, max-age=0')
         super().end_headers()

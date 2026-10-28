@@ -32,7 +32,7 @@ Use the exported near-black stack, one coral accent, white display text, quiet g
 
 The landing page opens with a full-bleed photographic hero, large two-line question, coral action, and a four-card instincts section — one card per role, listing that role's traits — followed by a legend of the five scale points. The quiz uses the exported 28/72 scouting-report split, a five-point Never-to-Always scale rendered as selectable columns, and an explicit Next control. The result uses the exported 36/64 split, coral tagline, strengths, the nine-trait scorecard with its proficiency bands, the two modifier readings, copy-link action, and restart action.
 
-The imported export demonstrates 12 questions, four axes, and 16 results. Court Type does not use axes at all: 46 items are each rated 1-5, nine traits are scored independently and ranked within the player's own game, and the top two traits resolve to one of 72 types across four roles, with Tempo and Temper reported as separate modifiers. Counts and labels in the adapted UI reflect that model.
+The imported export demonstrates 12 questions, four axes, and 16 results. Court Type does not use axes at all: 46 items are each rated 1-5, nine traits are scored independently and ranked within the player's own game, and the top two traits resolve to one of 45 types (36 unordered pairings plus 9 pure types) across four roles, with Tempo and Temper reported as separate modifiers. Counts and labels in the adapted UI reflect that model.
 
 ## Responsive and interaction
 
