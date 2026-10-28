@@ -34,6 +34,22 @@ export async function build({ siteUrl, outDir, rootDir = repoRoot }) {
 
   await writeFile(join(outDir, 'index.html'), html.replaceAll('%SITE_URL%', siteUrl));
 
+  // Unknown paths (e.g. retired slugs) land here; without it Cloudflare Pages would serve
+  // index.html at that depth, where its ./ asset paths break.
+  const home = escape(`${siteUrl}/`);
+  await writeFile(join(outDir, '404.html'), `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=${home}" />
+    <title>Court Type</title>
+  </head>
+  <body>
+    <p><a href="${home}">Go to Court Type</a></p>
+  </body>
+</html>
+`);
+
   const image = `${siteUrl}/public/images/hero-basketball.jpg`;
   const nested = html.replaceAll('href="./', 'href="../../').replaceAll('src="./', 'src="../../');
   for (const [slug, { name, role, tagline }] of Object.entries(ARCHETYPES)) {

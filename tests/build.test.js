@@ -52,6 +52,13 @@ test('archetype pages load assets from the site root', async () => {
   assert.ok(!/(?:href|src)="\.\//.test(html), 'no ./ references should remain on a nested page');
 });
 
+test('unknown paths get a 404 page that sends visitors to the landing page', async () => {
+  const outDir = await built;
+  const html = await readFile(join(outDir, '404.html'), 'utf8');
+  assert.ok(html.includes(`<meta http-equiv="refresh" content="0; url=${siteUrl}/" />`));
+  assert.ok(html.includes(`<a href="${siteUrl}/">`));
+});
+
 test('a missing meta marker fails the build', async () => {
   const sourceDir = await mkdtemp(join(tmpdir(), 'court-type-src-'));
   for (const dir of ['src', 'public']) await cp(new URL(`../${dir}`, import.meta.url), join(sourceDir, dir), { recursive: true });

@@ -123,9 +123,9 @@ Rules:
 - [x] README: build + deploy section (`dist/` is static, no rewrites needed).
 - [x] **Validate:** workflow green on the PR.
 
-### Task 7: Deploy (blocked on host + domain choice)
+### Task 7: Deploy (Cloudflare Pages, `court-type.pages.dev`)
 
-- [ ] Pick host/domain, set `SITE_URL`, add the deploy step to CI.
+- [x] Pick host/domain, set `SITE_URL`. Cloudflare Pages Git integration deploys, so CI needs no deploy step. `dist/404.html` redirects unknown paths to the landing page.
 - [ ] Verify unfurl of `/t/<slug>/` in a real card validator (e.g. paste into Slack/iMessage).
 
 ## Validation (end state)
