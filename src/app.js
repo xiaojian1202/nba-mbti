@@ -19,7 +19,11 @@ const state = {
   profile: null,
   archetype: shared,
   navSection: 0,
+  // Identifies the run in memory. Quiz history entries carry it, so entries left over from before a
+  // reload or from an earlier run are never mistaken for the current one.
+  runId: null,
 };
+const quizEntry = () => ({ screen: 'quiz', index: state.index, run: state.runId });
 // Resolved from this module, not the page, so pages nested under t/<slug>/ load the same files.
 const asset = (name) => new URL(`../public/images/${name}`, import.meta.url).href;
 const ball = `<img class="brand-ball" src="${asset('basketball-mark-outlined.svg')}" alt="" />`;
@@ -29,7 +33,7 @@ const arrow = `<span class="arrow-icon" aria-hidden="true">→</span>`;
 const RUN_KEY = 'court-type:run';
 const ITEM_IDS = new Set(items.map((item) => item.id));
 function saveRun() {
-  try { window.sessionStorage.setItem(RUN_KEY, JSON.stringify({ answers: state.answers, index: state.index })); } catch {}
+  try { window.sessionStorage.setItem(RUN_KEY, JSON.stringify({ answers: state.answers, index: state.index, run: state.runId })); } catch {}
 }
 function clearRun() {
   try { window.sessionStorage.removeItem(RUN_KEY); } catch {}
@@ -43,7 +47,8 @@ function loadRun() {
     const answered = entries.length;
     if (!valid || answered >= items.length) return null;
     if (!Number.isInteger(run.index) || run.index < 0 || run.index > items.length - 1 || run.index > answered) return null;
-    return { answers: run.answers, index: run.index };
+    if (!Number.isInteger(run.run)) return null;
+    return { answers: run.answers, index: run.index, run: run.run };
   } catch {
     return null;
   }
@@ -204,7 +209,7 @@ if (typeof window.addEventListener === 'function') {
   }, { passive: true });
   // Forward moves push history entries; every backward move (button or gesture) arrives here.
   window.addEventListener('popstate', (event) => {
-    if (event.state?.screen === 'quiz') {
+    if (event.state?.screen === 'quiz' && event.state.run === state.runId) {
       state.screen = 'quiz';
       state.index = Math.min(event.state.index, Object.keys(state.answers).length);
       saveRun();
@@ -264,17 +269,22 @@ root.addEventListener('click', async (event) => {
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
+    state.runId = Date.now();
     clearRun();
-    window.history.pushState({ screen: 'quiz', index: 0 }, '', siteRoot);
+    window.history.pushState(quizEntry(), '', siteRoot);
   } else if (action === 'resume') {
     const run = loadRun();
     if (!run) return;
     state.answers = run.answers;
     state.index = run.index;
+    state.runId = run.run;
     state.profile = null;
     state.archetype = null;
     state.screen = 'quiz';
-    window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
+    // A reload can leave the tab on this very question's entry; replace it rather than stack a duplicate.
+    const current = window.history.state;
+    const onThisQuestion = current?.screen === 'quiz' && current.run === run.run && current.index === run.index;
+    window.history[onThisQuestion ? 'replaceState' : 'pushState'](quizEntry(), '', siteRoot);
   } else if (action === 'home') {
     state.screen = 'landing';
     state.profile = null;
@@ -288,7 +298,7 @@ root.addEventListener('click', async (event) => {
     if (state.index < items.length - 1) {
       state.index += 1;
       saveRun();
-      window.history.pushState({ screen: 'quiz', index: state.index }, '', siteRoot);
+      window.history.pushState(quizEntry(), '', siteRoot);
     } else {
       const profile = scoreAnswers(state.answers);
       if (!profile) return;
