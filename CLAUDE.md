@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-29 (`docs/cloudflare-repo-access`; the Cloudflare GitHub app now has access to this repo, so pushes trigger builds).
+Last updated: 2026-10-29 (`main`; Cloudflare GitHub app repo access fixed and recorded as #8. Pushes to `main` deploy to https://court-type.pages.dev).
 
 ## Rule: keep this file current
 
