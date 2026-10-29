@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-28 (`main`; Cloudflare Pages deploy and `404.html` merged as #7, live at https://court-type.pages.dev).
+Last updated: 2026-10-29 (`docs/cloudflare-repo-access`; the Cloudflare GitHub app now has access to this repo, so pushes trigger builds).
 
 ## Rule: keep this file current
 
@@ -71,6 +71,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Stale quiz history entries after reload.** Quiz entries from before a reload, or from an earlier run, carried only `index`, so `popstate` treated them as the current run. Back could skip questions or jump into an abandoned run, and resuming stacked a duplicate entry. The fix was to tag entries with a run id and have `popstate` check it. Tests drive reload → resume/start → back sequences through the harness's `reloadOf`. Rule: history state must identify which run it belongs to, not just a position.
 - **Cloudflare Pages serves `index.html` at unknown paths when no `404.html` exists**, which breaks the page at depth (relative `./` assets). Found while picking the host, before any deploy. The fix was for the build to emit `404.html`, which a test now covers. Rule: before deploying to a new host, check what it does with unknown paths.
 - **The Pages dashboard's "Save and Deploy" failed once** with "An unknown error occurred" and created nothing. A retry worked. Rule: after a failed create, check the project list before retrying, so a half-created project isn't duplicated or renamed.
+- **Pushes didn't trigger Cloudflare builds.** After the project was created, the merge of #7 and the PR pushes produced no deployments, no GitHub check runs, and no PR comments. The "Cloudflare Workers and Pages" GitHub app's repository access didn't include `nba-mbti`, so push events never reached Cloudflare, even though the dashboard could list the repo during setup. The fix was adding the repo in GitHub → Settings → Applications → the app → Repository access. Adding access doesn't replay missed pushes; a new push is needed. Rule: after connecting a host, push once and confirm a build appears before claiming that pushes deploy.
 
 ## What works well (keep doing it)
 
