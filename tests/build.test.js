@@ -67,3 +67,16 @@ test('a missing meta marker fails the build', async () => {
   const outDir = await mkdtemp(join(tmpdir(), 'court-type-build-'));
   await assert.rejects(build({ siteUrl, outDir, rootDir: sourceDir }), /meta/);
 });
+
+test('the GoatCounter script is added to every page only when a site code is given', async () => {
+  const pages = (dir) => [join(dir, 'index.html'), ...Object.keys(ARCHETYPES).map((slug) => join(dir, 't', slug, 'index.html'))];
+  for (const file of pages(await built)) assert.ok(!(await readFile(file, 'utf8')).includes('goatcounter'), `${file} has analytics without a code`);
+
+  const outDir = await mkdtemp(join(tmpdir(), 'court-type-build-'));
+  await build({ siteUrl, outDir, goatcounter: 'court-type' });
+  const tag = '<script data-goatcounter="https://court-type.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>';
+  for (const file of pages(outDir)) assert.ok((await readFile(file, 'utf8')).includes(tag), `${file} is missing the GoatCounter script`);
+
+  const badDir = await mkdtemp(join(tmpdir(), 'court-type-build-'));
+  await assert.rejects(build({ siteUrl, outDir: badDir, goatcounter: 'x" onload="alert(1)' }), /GOATCOUNTER/);
+});

@@ -24,9 +24,14 @@ function metaBlock({ title, description, url, image }) {
     <!-- meta:end -->`;
 }
 
-export async function build({ siteUrl, outDir, rootDir = repoRoot }) {
-  const html = await readFile(join(rootDir, 'index.html'), 'utf8');
+export async function build({ siteUrl, outDir, goatcounter, rootDir = repoRoot }) {
+  let html = await readFile(join(rootDir, 'index.html'), 'utf8');
   if (!META.test(html)) throw new Error('index.html is missing the <!-- meta:start --> … <!-- meta:end --> markers');
+  // Anonymous page views and quiz events (see track() in src/app.js). Omitted when no code is set.
+  if (goatcounter) {
+    if (!/^[a-z0-9-]+$/.test(goatcounter)) throw new Error(`GOATCOUNTER must be a GoatCounter site code like "court-type", got "${goatcounter}"`);
+    html = html.replace('</head>', `  <script data-goatcounter="https://${goatcounter}.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>\n  </head>`);
+  }
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
@@ -70,6 +75,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error('SITE_URL is required, e.g. SITE_URL=https://example.com npm run build');
     process.exit(1);
   }
-  await build({ siteUrl, outDir: join(repoRoot, 'dist') });
-  console.log(`Built ${Object.keys(ARCHETYPES).length} archetype pages into dist/ for ${siteUrl}`);
+  await build({ siteUrl, outDir: join(repoRoot, 'dist'), goatcounter: process.env.GOATCOUNTER });
+  console.log(`Built ${Object.keys(ARCHETYPES).length} archetype pages into dist/ for ${siteUrl}${process.env.GOATCOUNTER ? '' : ' (no GOATCOUNTER code: analytics off)'}`);
 }
