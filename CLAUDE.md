@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-02 (GoatCounter analytics, issue #10: `track()` in `app.js`, script added by the build when `GOATCOUNTER` is set; the owner still has to create the account and set the env var. Pushes to `main` deploy to https://court-type.pages.dev).
+Last updated: 2026-11-02 (GoatCounter analytics live since PR #15: site code `courttype`, dashboard https://courttype.goatcounter.com, `GOATCOUNTER` set for Production only in Cloudflare Pages. Pushes to `main` deploy to https://court-type.pages.dev).
 
 ## Rule: keep this file current
 
@@ -29,7 +29,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 
 CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every push and PR, then uploads `dist/` as an artifact.
 
-**Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev` (and `GOATCOUNTER=<site code>` once the GoatCounter account exists; until then the live site has no analytics). Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
+**Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev` and `GOATCOUNTER=courttype` (Production only, so PR preview visits don't skew the counts; dashboard https://courttype.goatcounter.com). Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
 
 ## Map
 
@@ -90,7 +90,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 
 ## Known open items and stale spots
 
-- GoatCounter account not yet created: create it, then set `GOATCOUNTER` in the Cloudflare Pages env vars and redeploy. `share_click` should record native share vs clipboard once #12 lands.
+- `share_click` should record native share vs clipboard once #12 lands.
 
 - Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
 - `og:image` is the same hero image for every type. Per-type images are P2.
