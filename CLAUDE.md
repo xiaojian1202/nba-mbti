@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-02 (site moved to https://courttype.pages.dev, the Pages project `courttype` with `SITE_URL=https://courttype.pages.dev`. GoatCounter analytics live since PR #15: site code `courttype`, dashboard https://courttype.goatcounter.com, `GOATCOUNTER` set for Production only. Pushes to `main` deploy to https://courttype.pages.dev).
+Last updated: 2026-11-02 (native share sheet with clipboard fallback, issue #12. Site at https://courttype.pages.dev, Pages project `courttype`; GoatCounter analytics live, site code `courttype`, set for Production only. Pushes to `main` deploy to https://courttype.pages.dev).
 
 ## Rule: keep this file current
 
@@ -20,7 +20,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (114 tests, all passing as of the date above) |
+| `npm test` | `node --test` (120 tests, all passing as of the date above) |
 | `npm run check` | `node --check` on every source and build file |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. Add `GOATCOUNTER=<site code>` to put the GoatCounter script on every page; an invalid code fails the build. |
 | `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
@@ -57,6 +57,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Asset URLs** are resolved from `import.meta.url` (`asset()` and `siteRoot` in `app.js`), not from the page. This keeps them working at any depth, such as `/t/<slug>/`.
 - `TYPE_COUNT` is derived from `ARCHETYPES` and never hard-coded.
 - **Analytics (GoatCounter).** `scripts/build.js` adds the script tag before `</head>` only when `GOATCOUNTER` is set; source `index.html` and `npm run dev` never load it (GoatCounter also ignores localhost). The script counts one page view per real page load, and SPA `pushState` changes are not counted, so a shared `/t/<slug>/` landing counts once. `track(path, slug)` in `app.js` sends exactly three events: `quiz_start` (Start/Restart, not resume), `quiz_complete` (title = slug), and `share_click` (title = slug). It is wrapped in try/catch and no-ops when `window.goatcounter` is missing (ad blockers). Never send answers or trait scores. Tests stub `window.goatcounter` via `mount(path, { goatcounter })`.
+- **Sharing.** The result's share button uses `window.navigator.share` when it exists ("Share my type" / "Share this type"), sending `{ title: '<name> — Court Type', text, url }` with the canonical `t/<slug>/` URL built from `siteRoot`, not `location.href`. Fresh results say "I got <name>…"; shared links never claim the result is the visitor's. Cancelling the sheet (`AbortError`) shows nothing; any other share failure, or no native share ("Copy result link" / "Copy link"), copies the URL to the clipboard, and if that fails too the status line says to copy the address bar. Tests stub it via `mount(path, { navigator })` and read the status line from `app.status`.
 - **The answer scale** is `role="radiogroup"` with radios, roving tabindex, and arrow/Home/End keys.
 
 ## Critical changes (chronological)
@@ -90,7 +91,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 
 ## Known open items and stale spots
 
-- `share_click` should record native share vs clipboard once #12 lands.
+- `share_click` doesn't yet record native share vs clipboard. #12 has landed, so this is unblocked; it needs a choice of event naming (GoatCounter events carry only a path and a title).
 
 - Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
 - `og:image` is the same hero image for every type. Per-type images are P2.

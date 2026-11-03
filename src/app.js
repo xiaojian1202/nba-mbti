@@ -60,6 +60,10 @@ function track(path, slug) {
   try { window.goatcounter?.count?.({ path, ...(slug && { title: slug }), event: true }); } catch {}
 }
 
+function canShareNatively() {
+  return typeof window.navigator?.share === 'function';
+}
+
 function header() {
   const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview" class="${state.navSection === 0 ? 'header-nav-active' : ''}"><span class="nav-number">1</span>Overview</button><button data-action="instincts" class="${state.navSection === 1 ? 'header-nav-active' : ''}"><span class="nav-number">2</span>Instincts</button></nav>`;
   return `<header class="site-header"><div class="header-inner">
@@ -137,13 +141,14 @@ function result() {
   const lead = profile ? 'YOUR SCOUTING REPORT IS IN.' : 'A COURT TYPE.';
   const quizAction = profile ? 'restart' : 'start';
   const quizLabel = profile ? 'Take it again' : 'Find my court type';
+  const shareLabel = canShareNatively() ? (profile ? 'Share my type' : 'Share this type') : (profile ? 'Copy result link' : 'Copy link');
 
   root.innerHTML = `<div class="page page--result">
     ${header()}
     <main class="shell">
     <section class="result-lead" aria-labelledby="result-title">
       <div class="result-left"><p class="result-tag">${lead}</p><h1 id="result-title" tabindex="-1" class="result-name">${archetype.name}</h1><p class="result-code">${archetype.tagline}</p></div>
-      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${archetype.role}</p>${leanBar}<p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">Copy result link ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
+      <div class="result-right"><p class="result-stamp">${profile ? 'YOUR ROLE ON THE FLOOR' : `ONE OF ${TYPE_COUNT} COURT TYPES`}</p><p class="result-role">${archetype.role}</p>${leanBar}<p class="result-description">${archetype.description}</p><div class="result-actions"><button class="primary-button primary-button--small" data-action="share">${shareLabel} ${arrow}</button><button class="text-button" data-action="${quizAction}">${quizLabel}</button></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div>
     </section>
     <section class="result-details"><div><h2>What you bring<br />to the floor</h2><ul class="strength-list">${archetype.strengths.slice(0, 3).map((strength, index) => `<li><span class="circle-number">${String(index + 1).padStart(2, '0')}</span>${strength}</li>`).join('')}</ul></div>${scorecard}</section>
     <section class="end-cta"><button data-action="${quizAction}"><span class="micro-label">THE BEST TEAMS NEED EVERY TYPE</span><span class="end-cta-line">${profile ? 'Run It Back' : 'Find My Type'} <span class="line-arrow" aria-hidden="true"></span></span></button></section></main>
@@ -317,13 +322,25 @@ root.addEventListener('click', async (event) => {
       track('quiz_complete', profile.slug);
     }
   } else if (action === 'share') {
-    track('share_click', state.archetype.slug);
+    const { slug, name } = state.archetype;
+    track('share_click', slug);
     const status = root.querySelector('#share-status');
+    status.textContent = '';
+    const url = new URL(`t/${slug}/`, siteRoot).href;
+    if (canShareNatively()) {
+      const text = state.profile ? `I got ${name}. What's your court type?` : `${name}: one of ${TYPE_COUNT} court types. What's yours?`;
+      try {
+        await window.navigator.share({ title: `${name} — Court Type`, text, url });
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return; // The visitor closed the share sheet.
+      }
+    }
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      status.textContent = 'Link copied. Send your scouting report.';
+      await window.navigator.clipboard.writeText(url);
+      status.textContent = state.profile ? 'Link copied. Send your scouting report.' : 'Link copied.';
     } catch {
-      status.textContent = 'Copy the link from your address bar to share your type.';
+      status.textContent = `Copy the link from your address bar to share ${state.profile ? 'your' : 'this'} type.`;
     }
     return;
   }
