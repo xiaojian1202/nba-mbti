@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-29 (`main`; Cloudflare GitHub app repo access fixed and recorded as #8; README leads with the live URL. Pushes to `main` deploy to https://court-type.pages.dev).
+Last updated: 2026-11-02 (GoatCounter analytics, issue #10: `track()` in `app.js`, script added by the build when `GOATCOUNTER` is set; the owner still has to create the account and set the env var. Pushes to `main` deploy to https://court-type.pages.dev).
 
 ## Rule: keep this file current
 
@@ -13,20 +13,23 @@ Last updated: 2026-10-29 (`main`; Cloudflare GitHub app repo access fixed and re
 
 ## What it is
 
-Court Type is a basketball playing-style quiz. The user answers 46 Likert items and gets one of **45 archetypes**. Everything runs in the browser: no backend, no accounts, and answers are never collected. The app is plain HTML/CSS/ES modules with **zero dependencies**. Node is used only for tests and the build; Python is used only for the dev server.
+Court Type is a basketball playing-style quiz. The user answers 46 Likert items and gets one of **45 archetypes**. Everything runs in the browser: no backend, no accounts, and answers are never collected. Anonymous usage counts go to GoatCounter (see Key behaviors). The app is plain HTML/CSS/ES modules with **zero dependencies**. Node is used only for tests and the build; Python is used only for the dev server.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (59 tests, all passing as of the date above) |
+| `npm test` | `node --test` (114 tests, all passing as of the date above) |
 | `npm run check` | `node --check` on every source and build file |
-| `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. |
+| `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. Add `GOATCOUNTER=<site code>` to put the GoatCounter script on every page; an invalid code fails the build. |
+| `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
+
+**Testing ladder: offline first, live last.** Claude usage costs money, and browser checks (screenshots, page reads) and push-then-check-live loops are the expensive part. Use the cheapest step that can catch the bug, in this order: (1) `npm test`, which includes `tests/preview.test.js`, where the real build is served over HTTP and every page (landing + all `/t/<slug>/`) has its stylesheet, module graph, and `asset()` images fetched, plus the redirect and 404 behavior. (2) `npm run check`. (3) A browser check against `npm run preview` or `npm run dev` on localhost, and only for what Node can't see: layout, interaction, visuals. (4) The live site or a PR preview URL, only as the final stage. When a bug shows up in a later step, add a test at the earliest step that could have caught it.
 
 CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every push and PR, then uploads `dist/` as an artifact.
 
-**Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev`. Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
+**Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev` (and `GOATCOUNTER=<site code>` once the GoatCounter account exists; until then the live site has no analytics). Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
 
 ## Map
 
@@ -37,6 +40,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - `src/app.js`: the UI. It renders strings into `#app`, handles routing, history, sessionStorage resume, and sharing.
 - `src/styles.css`: the design tokens and all styles.
 - `scripts/build.js`: copies `src/` and `public/`, replaces `%SITE_URL%`, and writes per-slug pages. It does this by swapping the `<!-- meta:start -->…<!-- meta:end -->` block in `index.html` and rewriting `./` paths to `../../`. It also writes `404.html`, a redirect to `SITE_URL`. Without it, Cloudflare Pages falls back to serving `index.html` at unknown paths like retired slugs, where the `./` asset paths break.
+- `scripts/preview.js`: `serve(dir)`, a zero-dependency HTTP server that mimics Cloudflare Pages routing, plus the `npm run preview` entry point.
+- `tests/preview.test.js`: builds into a temp dir, serves it on a random port, and crawls every page's local references.
 - `tests/app.test.js`: drives `app.js` through a **hand-rolled DOM/window/history/sessionStorage harness** (`mount(path, { sessionStorage })`). There are no test dependencies; extend the harness only as much as a test needs.
 - `docs/superpowers/specs/` and `plans/`: approved design docs, which are tracked. `docs/FIXES.md` is the 2026-09-15 audit.
 - `DESIGN.md` covers the visual system. `PRODUCT.md` covers product intent.
@@ -51,6 +56,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Run ids on history entries.** Each run gets `state.runId` (set on start, restored on resume). Quiz history entries carry it, and `popstate` ignores quiz entries from any other run. Resuming onto the exact entry a reload left behind uses `replaceState`, not `pushState`.
 - **Asset URLs** are resolved from `import.meta.url` (`asset()` and `siteRoot` in `app.js`), not from the page. This keeps them working at any depth, such as `/t/<slug>/`.
 - `TYPE_COUNT` is derived from `ARCHETYPES` and never hard-coded.
+- **Analytics (GoatCounter).** `scripts/build.js` adds the script tag before `</head>` only when `GOATCOUNTER` is set; source `index.html` and `npm run dev` never load it (GoatCounter also ignores localhost). The script counts one page view per real page load, and SPA `pushState` changes are not counted, so a shared `/t/<slug>/` landing counts once. `track(path, slug)` in `app.js` sends exactly three events: `quiz_start` (Start/Restart, not resume), `quiz_complete` (title = slug), and `share_click` (title = slug). It is wrapped in try/catch and no-ops when `window.goatcounter` is missing (ad blockers). Never send answers or trait scores. Tests stub `window.goatcounter` via `mount(path, { goatcounter })`.
 - **The answer scale** is `role="radiogroup"` with radios, roving tabindex, and arrow/Home/End keys.
 
 ## Critical changes (chronological)
@@ -72,6 +78,7 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - **Cloudflare Pages serves `index.html` at unknown paths when no `404.html` exists**, which breaks the page at depth (relative `./` assets). Found while picking the host, before any deploy. The fix was for the build to emit `404.html`, which a test now covers. Rule: before deploying to a new host, check what it does with unknown paths.
 - **The Pages dashboard's "Save and Deploy" failed once** with "An unknown error occurred" and created nothing. A retry worked. Rule: after a failed create, check the project list before retrying, so a half-created project isn't duplicated or renamed.
 - **Pushes didn't trigger Cloudflare builds.** After the project was created, the merge of #7 and the PR pushes produced no deployments, no GitHub check runs, and no PR comments. The "Cloudflare Workers and Pages" GitHub app's repository access didn't include `nba-mbti`, so push events never reached Cloudflare, even though the dashboard could list the repo during setup. The fix was adding the repo in GitHub → Settings → Applications → the app → Repository access. Adding access doesn't replay missed pushes; a new push is needed. Rule: after connecting a host, push once and confirm a build appears before claiming that pushes deploy.
+- **Analytics share event lost its slug on fresh results.** The first `share_click` looked up the slug by object identity in `ARCHETYPES`, but `buildArchetype` returns a copy, so it only worked on shared links. It was caught before commit by a test that shares after finishing. The fix was to use `archetype.slug`. Rule: archetype objects are copies; identify them by `.slug`, never by `===`.
 
 ## What works well (keep doing it)
 
@@ -82,6 +89,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - `docs/FIXES.md` has a "Verified as *not* problems" section (contrast, reduced motion, overflow, `?type` safety). Don't re-audit those items.
 
 ## Known open items and stale spots
+
+- GoatCounter account not yet created: create it, then set `GOATCOUNTER` in the Cloudflare Pages env vars and redeploy. `share_click` should record native share vs clipboard once #12 lands.
 
 - Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
 - `og:image` is the same hero image for every type. Per-type images are P2.

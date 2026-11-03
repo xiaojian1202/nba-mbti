@@ -54,6 +54,12 @@ function loadRun() {
   }
 }
 
+// Anonymous funnel counts via GoatCounter, when the build added its script. Only event names and the
+// archetype slug are sent, never answers or scores. Blocked or missing analytics must not affect the quiz.
+function track(path, slug) {
+  try { window.goatcounter?.count?.({ path, ...(slug && { title: slug }), event: true }); } catch {}
+}
+
 function header() {
   const nav = state.screen === 'quiz' ? '' : `<nav class="header-nav" aria-label="Main navigation"><button data-action="overview" class="${state.navSection === 0 ? 'header-nav-active' : ''}"><span class="nav-number">1</span>Overview</button><button data-action="instincts" class="${state.navSection === 1 ? 'header-nav-active' : ''}"><span class="nav-number">2</span>Instincts</button></nav>`;
   return `<header class="site-header"><div class="header-inner">
@@ -272,6 +278,7 @@ root.addEventListener('click', async (event) => {
     state.runId = Date.now();
     clearRun();
     window.history.pushState(quizEntry(), '', siteRoot);
+    track('quiz_start');
   } else if (action === 'resume') {
     const run = loadRun();
     if (!run) return;
@@ -307,8 +314,10 @@ root.addEventListener('click', async (event) => {
       state.screen = 'result';
       clearRun();
       window.history.pushState({ screen: 'result' }, '', new URL(`t/${profile.slug}/`, siteRoot));
+      track('quiz_complete', profile.slug);
     }
   } else if (action === 'share') {
+    track('share_click', state.archetype.slug);
     const status = root.querySelector('#share-status');
     try {
       await navigator.clipboard.writeText(window.location.href);

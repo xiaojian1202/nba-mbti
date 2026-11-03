@@ -21,7 +21,7 @@ const throwingStorage = {
 };
 
 // `reloadOf` reloads the page of an earlier mount: the tab keeps its history entries and position.
-async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf } = {}) {
+async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, goatcounter } = {}) {
   const original = { document: globalThis.document, window: globalThis.window };
   let html = '';
   function mutateButton(rating, transform) {
@@ -102,6 +102,7 @@ async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf } =
     sessionStorage,
     addEventListener(name, handler) { listeners[name] = handler; },
     scrollTo() {},
+    goatcounter,
   };
   await import(`../src/app.js?test=${Math.random()}`);
   return {
@@ -540,4 +541,64 @@ test('the quiz still works when sessionStorage throws', async () => {
   assert.match(app.root.innerHTML, /page--result/);
   assert.ok(ARCHETYPES[slugOf(app.href)]);
   app.cleanup();
+});
+
+// A stand-in for GoatCounter's script: records every count() call.
+function recorder() {
+  const events = [];
+  return { events, goatcounter: { count: (vars) => events.push(vars) } };
+}
+
+test('starting the quiz counts quiz_start once; resuming does not', async () => {
+  const storage = memoryStorage();
+  const { events, goatcounter } = recorder();
+  const app = await mount('', { sessionStorage: storage, goatcounter });
+  assert.deepEqual(events, [], 'loading the landing page sends no events');
+  await app.action('start');
+  await answer(app, 5);
+  assert.deepEqual(events, [{ path: 'quiz_start', event: true }]);
+  app.cleanup();
+
+  const after = recorder();
+  const reload = await mount('', { sessionStorage: storage, goatcounter: after.goatcounter });
+  await reload.action('resume');
+  await answer(reload, 3);
+  assert.deepEqual(after.events, []);
+  reload.cleanup();
+});
+
+test('finishing counts quiz_complete once with only the archetype slug', async () => {
+  const { events, goatcounter } = recorder();
+  const app = await mount('', { goatcounter });
+  await app.action('start');
+  await answer(app, items.length);
+  assert.match(app.root.innerHTML, /page--result/);
+  assert.deepEqual(events, [
+    { path: 'quiz_start', event: true },
+    { path: 'quiz_complete', title: slugOf(app.href), event: true },
+  ]);
+  await app.action('share');
+  assert.deepEqual(events.at(-1), { path: 'share_click', title: slugOf(app.href), event: true });
+  app.cleanup();
+});
+
+test('pressing share counts share_click; a shared-link landing sends no events', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const { events, goatcounter } = recorder();
+  const app = await mount(`t/${slug}/`, { goatcounter });
+  assert.deepEqual(events, [], 'the landing is a page view, counted by the script itself');
+  await app.action('share');
+  assert.deepEqual(events, [{ path: 'share_click', title: slug, event: true }]);
+  app.cleanup();
+});
+
+test('the quiz works when analytics is blocked, missing, or throws', async () => {
+  for (const goatcounter of [undefined, {}, { count() { throw new Error('blocked'); } }]) {
+    const app = await mount('', { goatcounter });
+    await app.action('start');
+    await answer(app, items.length);
+    assert.match(app.root.innerHTML, /page--result/);
+    await app.action('share');
+    app.cleanup();
+  }
 });

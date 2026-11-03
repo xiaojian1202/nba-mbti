@@ -24,7 +24,7 @@ Someone can take the quiz on a phone or desktop browser and share a result link.
 
 ## Capabilities and Constraints
 
-The first release has 46 items across nine playing-style traits and 45 archetypes. It takes about ten minutes. It does not use accounts, collect answers, or compare users to real NBA players.
+The first release has 46 items across nine playing-style traits and 45 archetypes. It takes about ten minutes. It does not use accounts, collect answers, or compare users to real NBA players. It records anonymous usage counts (page views, quiz starts, completions with the resulting type, share clicks) to measure the launch test, and never sends answers or trait scores.
 
 ## Product Principles
 
