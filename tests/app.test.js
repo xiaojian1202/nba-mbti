@@ -21,9 +21,10 @@ const throwingStorage = {
 };
 
 // `reloadOf` reloads the page of an earlier mount: the tab keeps its history entries and position.
-async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, goatcounter } = {}) {
+async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, goatcounter, navigator = {} } = {}) {
   const original = { document: globalThis.document, window: globalThis.window };
   let html = '';
+  const status = { textContent: '' };
   function mutateButton(rating, transform) {
     const marker = `data-rating="${rating}"`;
     const markerIndex = html.indexOf(marker);
@@ -67,6 +68,7 @@ async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, go
           },
         };
       }
+      if (selector === '#share-status') return status;
       return { focus() {}, textContent: '' };
     },
     querySelectorAll(selector) {
@@ -103,6 +105,7 @@ async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, go
     addEventListener(name, handler) { listeners[name] = handler; },
     scrollTo() {},
     goatcounter,
+    navigator,
   };
   await import(`../src/app.js?test=${Math.random()}`);
   return {
@@ -111,6 +114,7 @@ async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, go
     entries,
     get position() { return position; },
     get href() { return href; },
+    get status() { return status.textContent; },
     async rate(value) { await root.click({ target: { closest: (selector) => selector === '[data-rating]' ? { dataset: { rating: String(value) } } : null } }); },
     async action(name) { await root.click({ target: { closest: (selector) => selector === '[data-action]' ? { dataset: { action: name } } : null } }); },
     async key(key, fromRating) { await root.keydown({ key, preventDefault() {}, target: { closest: (selector) => selector === '[data-rating]' ? { dataset: { rating: String(fromRating) } } : null } }); },
@@ -577,19 +581,48 @@ test('finishing counts quiz_complete once with only the archetype slug', async (
     { path: 'quiz_start', event: true },
     { path: 'quiz_complete', title: slugOf(app.href), event: true },
   ]);
-  await app.action('share');
-  assert.deepEqual(events.at(-1), { path: 'share_click', title: slugOf(app.href), event: true });
   app.cleanup();
 });
 
-test('pressing share counts share_click; a shared-link landing sends no events', async () => {
+test('a completed share sheet counts share_native and a copied link counts share_copy, both with the slug', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const native = recorder();
+  const sheet = await mount(`t/${slug}/`, { goatcounter: native.goatcounter, navigator: shareNavigator().navigator });
+  assert.deepEqual(native.events, [], 'the landing is a page view, counted by the script itself');
+  await sheet.action('share');
+  assert.deepEqual(native.events, [{ path: 'share_native', title: slug, event: true }]);
+  sheet.cleanup();
+
+  const copy = recorder();
+  const app = await mount('', { goatcounter: copy.goatcounter, navigator: clipboardNavigator().navigator });
+  await app.action('start');
+  await answer(app, items.length);
+  await app.action('share');
+  assert.deepEqual(copy.events.at(-1), { path: 'share_copy', title: slugOf(app.href), event: true });
+  app.cleanup();
+});
+
+test('a failed share sheet that falls back to copying counts only share_copy', async () => {
   const slug = Object.keys(ARCHETYPES)[0];
   const { events, goatcounter } = recorder();
-  const app = await mount(`t/${slug}/`, { goatcounter });
-  assert.deepEqual(events, [], 'the landing is a page view, counted by the script itself');
+  const { navigator } = shareNavigator(() => { throw new DOMException('no', 'NotAllowedError'); });
+  navigator.clipboard = clipboardNavigator().navigator.clipboard;
+  const app = await mount(`t/${slug}/`, { goatcounter, navigator });
   await app.action('share');
-  assert.deepEqual(events, [{ path: 'share_click', title: slug, event: true }]);
+  assert.deepEqual(events, [{ path: 'share_copy', title: slug, event: true }]);
   app.cleanup();
+});
+
+test('a cancelled share sheet or a failed copy counts nothing', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const cancel = shareNavigator(() => { throw new DOMException('cancelled', 'AbortError'); }).navigator;
+  for (const navigator of [cancel, {}, clipboardNavigator(true).navigator]) {
+    const { events, goatcounter } = recorder();
+    const app = await mount(`t/${slug}/`, { goatcounter, navigator });
+    await app.action('share');
+    assert.deepEqual(events, []);
+    app.cleanup();
+  }
 });
 
 test('the quiz works when analytics is blocked, missing, or throws', async () => {
@@ -599,6 +632,101 @@ test('the quiz works when analytics is blocked, missing, or throws', async () =>
     await answer(app, items.length);
     assert.match(app.root.innerHTML, /page--result/);
     await app.action('share');
+    app.cleanup();
+  }
+});
+
+// Navigator stubs for the share button. Each records what it was asked to do.
+function shareNavigator(share) {
+  const calls = [];
+  return { calls, navigator: { share: async (data) => { calls.push(data); return share?.(); } } };
+}
+function clipboardNavigator(fail = false) {
+  const calls = [];
+  return { calls, navigator: { clipboard: { writeText: async (text) => { calls.push(text); if (fail) throw new Error('denied'); } } } };
+}
+// The app resolves its site root from its own module url, so in tests the canonical link is file:-based.
+const canonical = (slug) => new URL(`../t/${slug}/`, new URL('../src/app.js', import.meta.url)).href;
+const shareLabel = (html) => html.match(/data-action="share">([^<]*)/)[1].trim();
+
+test('with native share, a fresh result opens the share sheet with its own words and canonical url', async () => {
+  const { calls, navigator } = shareNavigator();
+  const app = await mount('', { navigator });
+  await app.action('start');
+  await answer(app, items.length);
+  const slug = slugOf(app.href);
+  assert.equal(shareLabel(app.root.innerHTML), 'Share my type');
+  await app.action('share');
+  assert.deepEqual(calls, [{
+    title: `${ARCHETYPES[slug].name} — Court Type`,
+    text: `I got ${ARCHETYPES[slug].name}. What's your court type?`,
+    url: canonical(slug),
+  }]);
+  assert.equal(app.status, '');
+  app.cleanup();
+});
+
+test('a shared link offers to share the type without claiming it is the visitor\'s result', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const { calls, navigator } = shareNavigator();
+  const app = await mount(`t/${slug}/`, { navigator });
+  assert.equal(shareLabel(app.root.innerHTML), 'Share this type');
+  await app.action('share');
+  assert.equal(calls.length, 1);
+  assert.doesNotMatch(calls[0].text, /I got/);
+  assert.match(calls[0].text, new RegExp(ARCHETYPES[slug].name));
+  assert.equal(calls[0].url, canonical(slug));
+  app.cleanup();
+});
+
+test('cancelling the share sheet shows nothing', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const { calls, navigator } = shareNavigator(() => { throw new DOMException('cancelled', 'AbortError'); });
+  navigator.clipboard = { writeText: async () => { throw new Error('should not copy after a cancel'); } };
+  const app = await mount(`t/${slug}/`, { navigator });
+  await app.action('share');
+  assert.equal(calls.length, 1);
+  assert.equal(app.status, '');
+  app.cleanup();
+});
+
+test('a failing share sheet falls back to copying the link', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const { navigator } = shareNavigator(() => { throw new DOMException('no', 'NotAllowedError'); });
+  const copied = [];
+  navigator.clipboard = { writeText: async (text) => { copied.push(text); } };
+  const app = await mount(`t/${slug}/`, { navigator });
+  await app.action('share');
+  assert.deepEqual(copied, [canonical(slug)]);
+  assert.match(app.status, /copied/i);
+  app.cleanup();
+});
+
+test('without native share, the button copies the canonical link', async () => {
+  const { calls, navigator } = clipboardNavigator();
+  const app = await mount('', { navigator });
+  await app.action('start');
+  await answer(app, items.length);
+  const slug = slugOf(app.href);
+  assert.equal(shareLabel(app.root.innerHTML), 'Copy result link');
+  await app.action('share');
+  assert.deepEqual(calls, [canonical(slug)]);
+  assert.equal(app.status, 'Link copied. Send your scouting report.');
+  app.cleanup();
+
+  const shared = await mount(`?type=${slug}`, clipboardNavigator());
+  assert.equal(shareLabel(shared.root.innerHTML), 'Copy link');
+  await shared.action('share');
+  assert.equal(shared.status, 'Link copied.');
+  shared.cleanup();
+});
+
+test('with no share sheet and no clipboard, the visitor is told to copy the address bar', async () => {
+  for (const navigator of [{}, clipboardNavigator(true).navigator]) {
+    const slug = Object.keys(ARCHETYPES)[0];
+    const app = await mount(`t/${slug}/`, { navigator });
+    await app.action('share');
+    assert.equal(app.status, 'Copy the link from your address bar to share this type.');
     app.cleanup();
   }
 });
