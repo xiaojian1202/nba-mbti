@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-10-29 (`main`; Cloudflare GitHub app repo access fixed and recorded as #8; README leads with the live URL. Pushes to `main` deploy to https://court-type.pages.dev).
+Last updated: 2026-10-30 (`npm run preview` and `tests/preview.test.js` serve the real build offline with Cloudflare Pages routing; see "Testing ladder". Pushes to `main` deploy to https://court-type.pages.dev).
 
 ## Rule: keep this file current
 
@@ -20,9 +20,12 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (59 tests, all passing as of the date above) |
+| `npm test` | `node --test` (109 tests, all passing as of the date above) |
 | `npm run check` | `node --check` on every source and build file |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. |
+| `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
+
+**Testing ladder: offline first, live last.** Claude usage costs money, and browser checks (screenshots, page reads) and push-then-check-live loops are the expensive part. Use the cheapest step that can catch the bug, in this order: (1) `npm test`, which includes `tests/preview.test.js`, where the real build is served over HTTP and every page (landing + all `/t/<slug>/`) has its stylesheet, module graph, and `asset()` images fetched, plus the redirect and 404 behavior. (2) `npm run check`. (3) A browser check against `npm run preview` or `npm run dev` on localhost, and only for what Node can't see: layout, interaction, visuals. (4) The live site or a PR preview URL, only as the final stage. When a bug shows up in a later step, add a test at the earliest step that could have caught it.
 
 CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every push and PR, then uploads `dist/` as an artifact.
 
@@ -37,6 +40,8 @@ CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every pu
 - `src/app.js`: the UI. It renders strings into `#app`, handles routing, history, sessionStorage resume, and sharing.
 - `src/styles.css`: the design tokens and all styles.
 - `scripts/build.js`: copies `src/` and `public/`, replaces `%SITE_URL%`, and writes per-slug pages. It does this by swapping the `<!-- meta:start -->…<!-- meta:end -->` block in `index.html` and rewriting `./` paths to `../../`. It also writes `404.html`, a redirect to `SITE_URL`. Without it, Cloudflare Pages falls back to serving `index.html` at unknown paths like retired slugs, where the `./` asset paths break.
+- `scripts/preview.js`: `serve(dir)`, a zero-dependency HTTP server that mimics Cloudflare Pages routing, plus the `npm run preview` entry point.
+- `tests/preview.test.js`: builds into a temp dir, serves it on a random port, and crawls every page's local references.
 - `tests/app.test.js`: drives `app.js` through a **hand-rolled DOM/window/history/sessionStorage harness** (`mount(path, { sessionStorage })`). There are no test dependencies; extend the harness only as much as a test needs.
 - `docs/superpowers/specs/` and `plans/`: approved design docs, which are tracked. `docs/FIXES.md` is the 2026-09-15 audit.
 - `DESIGN.md` covers the visual system. `PRODUCT.md` covers product intent.
