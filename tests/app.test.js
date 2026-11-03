@@ -581,19 +581,48 @@ test('finishing counts quiz_complete once with only the archetype slug', async (
     { path: 'quiz_start', event: true },
     { path: 'quiz_complete', title: slugOf(app.href), event: true },
   ]);
-  await app.action('share');
-  assert.deepEqual(events.at(-1), { path: 'share_click', title: slugOf(app.href), event: true });
   app.cleanup();
 });
 
-test('pressing share counts share_click; a shared-link landing sends no events', async () => {
+test('a completed share sheet counts share_native and a copied link counts share_copy, both with the slug', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const native = recorder();
+  const sheet = await mount(`t/${slug}/`, { goatcounter: native.goatcounter, navigator: shareNavigator().navigator });
+  assert.deepEqual(native.events, [], 'the landing is a page view, counted by the script itself');
+  await sheet.action('share');
+  assert.deepEqual(native.events, [{ path: 'share_native', title: slug, event: true }]);
+  sheet.cleanup();
+
+  const copy = recorder();
+  const app = await mount('', { goatcounter: copy.goatcounter, navigator: clipboardNavigator().navigator });
+  await app.action('start');
+  await answer(app, items.length);
+  await app.action('share');
+  assert.deepEqual(copy.events.at(-1), { path: 'share_copy', title: slugOf(app.href), event: true });
+  app.cleanup();
+});
+
+test('a failed share sheet that falls back to copying counts only share_copy', async () => {
   const slug = Object.keys(ARCHETYPES)[0];
   const { events, goatcounter } = recorder();
-  const app = await mount(`t/${slug}/`, { goatcounter });
-  assert.deepEqual(events, [], 'the landing is a page view, counted by the script itself');
+  const { navigator } = shareNavigator(() => { throw new DOMException('no', 'NotAllowedError'); });
+  navigator.clipboard = clipboardNavigator().navigator.clipboard;
+  const app = await mount(`t/${slug}/`, { goatcounter, navigator });
   await app.action('share');
-  assert.deepEqual(events, [{ path: 'share_click', title: slug, event: true }]);
+  assert.deepEqual(events, [{ path: 'share_copy', title: slug, event: true }]);
   app.cleanup();
+});
+
+test('a cancelled share sheet or a failed copy counts nothing', async () => {
+  const slug = Object.keys(ARCHETYPES)[0];
+  const cancel = shareNavigator(() => { throw new DOMException('cancelled', 'AbortError'); }).navigator;
+  for (const navigator of [cancel, {}, clipboardNavigator(true).navigator]) {
+    const { events, goatcounter } = recorder();
+    const app = await mount(`t/${slug}/`, { goatcounter, navigator });
+    await app.action('share');
+    assert.deepEqual(events, []);
+    app.cleanup();
+  }
 });
 
 test('the quiz works when analytics is blocked, missing, or throws', async () => {

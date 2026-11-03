@@ -323,7 +323,6 @@ root.addEventListener('click', async (event) => {
     }
   } else if (action === 'share') {
     const { slug, name } = state.archetype;
-    track('share_click', slug);
     const status = root.querySelector('#share-status');
     status.textContent = '';
     const url = new URL(`t/${slug}/`, siteRoot).href;
@@ -331,6 +330,7 @@ root.addEventListener('click', async (event) => {
       const text = state.profile ? `I got ${name}. What's your court type?` : `${name}: one of ${TYPE_COUNT} court types. What's yours?`;
       try {
         await window.navigator.share({ title: `${name} — Court Type`, text, url });
+        track('share_native', slug);
         return;
       } catch (error) {
         if (error?.name === 'AbortError') return; // The visitor closed the share sheet.
@@ -338,6 +338,7 @@ root.addEventListener('click', async (event) => {
     }
     try {
       await window.navigator.clipboard.writeText(url);
+      track('share_copy', slug);
       status.textContent = state.profile ? 'Link copied. Send your scouting report.' : 'Link copied.';
     } catch {
       status.textContent = `Copy the link from your address bar to share ${state.profile ? 'your' : 'this'} type.`;
