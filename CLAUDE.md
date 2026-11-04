@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-03 (rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
+Last updated: 2026-11-03 (trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
 
 ## Rule: keep this file current
 
@@ -21,27 +21,20 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
 | `npm test` | `node --test` (122 tests, all passing as of the date above) |
-| `npm run check` | `node --check` on every source and build file |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. Add `GOATCOUNTER=<site code>` to put the GoatCounter script on every page; an invalid code fails the build. |
 | `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
 
 **Testing ladder: offline first, live last.** Claude usage costs money, and browser checks (screenshots, page reads) and push-then-check-live loops are the expensive part. Use the cheapest step that can catch the bug, in this order: (1) `npm test`, which includes `tests/preview.test.js`, where the real build is served over HTTP and every page (landing + all `/t/<slug>/`) has its stylesheet, module graph, and `asset()` images fetched, plus the redirect and 404 behavior. (2) `npm run check`. (3) A browser check against `npm run preview` or `npm run dev` on localhost, and only for what Node can't see: layout, interaction, visuals. (4) The live site or a PR preview URL, only as the final stage. When a bug shows up in a later step, add a test at the earliest step that could have caught it.
-
-CI (`.github/workflows/ci.yml`, Node 22) runs test, check, and build on every push and PR, then uploads `dist/` as an artifact.
 
 **Deploy: Cloudflare Pages**, project `court-type`, live at https://court-type.pages.dev (a move to `courttype.pages.dev` was recorded on 2026-11-02 but that project never existed, and it was rolled back on 2026-11-03; see Past failures; Cloudflare account chenx2003, GitHub app connected as `xiaojian1202`). Every push to `main` deploys to production. It uses Cloudflare's Git integration (no deploy step in CI): production branch `main`, build command `npm run build`, output directory `dist`, environment variable `SITE_URL=https://court-type.pages.dev` and `GOATCOUNTER=courttype` (Production only, so PR preview visits don't skew the counts; dashboard https://courttype.goatcounter.com). Every PR gets a preview URL. The `pages.dev` name can't be renamed, and `SITE_URL` is baked into share metadata, so changing the address means a new project and a rebuild.
 
 ## Map
 
 - `src/traits.js`: ROLES (4), TRAITS (9; **array order is the canonical tie-break order**), MODIFIERS (Tempo, Temper), SCALE, and PROFICIENCY_BANDS.
-- `src/questions.js`: the 46 items. 36 trait items (4 per trait) and 10 modifier items (5 per modifier), each rated 1–5.
 - `src/quiz.js`: `scoreAnswers(answers)`, a pure function that returns `null` unless all 46 answers are valid. It computes trait sums, the player's mean, proficiency bands (based on deviation from the player's own mean), role means, a ranked trait list, the archetype, `lean`, and the modifier poles.
 - `src/archetypes.js`: 9 PURE and 36 BLENDS, plus `buildArchetype(primary, secondary, deviation)`. A result is pure when the primary trait's deviation is ≥ `PURE_DEVIATION_THRESHOLD = 7`. Blend pairs are **unordered**: the pair is sorted into TRAITS order before lookup.
 - `src/app.js`: the UI. It renders strings into `#app`, handles routing, history, sessionStorage resume, and sharing.
-- `src/styles.css`: the design tokens and all styles.
 - `scripts/build.js`: copies `src/` and `public/`, replaces `%SITE_URL%`, and writes per-slug pages. It does this by swapping the `<!-- meta:start -->…<!-- meta:end -->` block in `index.html` and rewriting `./` paths to `../../`. It also writes `404.html`, a redirect to `SITE_URL`. Without it, Cloudflare Pages falls back to serving `index.html` at unknown paths like retired slugs, where the `./` asset paths break.
-- `scripts/preview.js`: `serve(dir)`, a zero-dependency HTTP server that mimics Cloudflare Pages routing, plus the `npm run preview` entry point.
-- `tests/preview.test.js`: builds into a temp dir, serves it on a random port, and crawls every page's local references.
 - `tests/app.test.js`: drives `app.js` through a **hand-rolled DOM/window/history/sessionStorage harness** (`mount(path, { sessionStorage })`). There are no test dependencies; extend the harness only as much as a test needs.
 - `docs/superpowers/specs/` and `plans/`: approved design docs, which are tracked. `docs/FIXES.md` is the 2026-09-15 audit.
 - `DESIGN.md` covers the visual system. `PRODUCT.md` covers product intent.
