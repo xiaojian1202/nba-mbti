@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-04 (landing page privacy note under the start button; `.codex/` added to the gitignored tool artifacts; 2026-11-03: `*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
+Last updated: 2026-11-04 (share previews use a landscape `og-card.jpg` with size and site-name tags; landing page privacy note under the start button; `.codex/` added to the gitignored tool artifacts; 2026-11-03: `*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
 
 ## Rule: keep this file current
 
@@ -20,7 +20,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (124 tests, all passing as of the date above) |
+| `npm test` | `node --test` (125 tests, all passing as of the date above) |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. Add `GOATCOUNTER=<site code>` to put the GoatCounter script on every page; an invalid code fails the build. |
 | `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
 
@@ -79,6 +79,8 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 
 - **The progress bar moved when an option was picked**, before Next was clicked, so it ran ahead of what the user had committed to. `updateScaleSelection()` re-set the bar on every pick. The fix was to drop that update so the bar changes only on render; a test asserts the bar stays put after a pick. Rule: in-place updates on selection should touch only selection state, not progress.
 
+- **Share previews cropped the hero photo badly.** `og:image` pointed at the portrait hero (1024×1536). Slack, iMessage, X and Facebook draw large cards at about 1.91:1 and center-crop, which cut off the player's head and the ball. Found on 2026-11-04 by fetching a `/t/` page with crawler user agents and rendering the crop locally. The fix was a dedicated landscape `og-card.jpg`, plus `og:image:width`/`height` and `og:site_name`; a build test checks every page. Rule: a share image must be landscape (about 1.91:1); preview the crop before shipping it.
+
 ## What works well (keep doing it)
 
 - A pure, deterministic scoring core with thorough tests (tie-breaks, band boundaries, modifier midpoints, slug uniqueness). UI work shouldn't need to touch scoring.
@@ -89,8 +91,8 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 
 ## Known open items and stale spots
 
-- Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7).
-- `og:image` is the same hero image for every type. Per-type images are P2.
+- Real unfurl checks of a live `/t/<slug>/` link still need to be done in Slack or iMessage (plan Task 7). A crawler-side check (Slackbot, facebookexternalhit and Twitterbot user agents) passed on 2026-11-04.
+- `og:image` is the same `public/images/og-card.jpg` (1024×536, cropped from the hero photo) for every page. Per-type images are P2. If the card image is replaced, update the width/height tags in `index.html` and `metaBlock()` in `scripts/build.js`.
 - The proficiency band thresholds have not been calibrated.
 - Remaining P2 items from FIXES.md (touch targets under 44px, WebP/AVIF hero) should be rechecked against current CSS before acting on them.
 

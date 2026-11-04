@@ -37,11 +37,23 @@ test('each archetype page carries its own share metadata', async () => {
     const html = await readFile(join(outDir, 't', slug, 'index.html'), 'utf8');
     assert.ok(meta(html, 'og:title').includes(name), `${slug} og:title should name ${name}`);
     assert.equal(meta(html, 'og:url'), `${siteUrl}/t/${slug}/`);
-    assert.equal(meta(html, 'og:image'), `${siteUrl}/public/images/hero-basketball.jpg`);
     assert.ok(html.includes(`<title>${name} — Court Type</title>`), `${slug} <title> should name ${name}`);
   }
   const root = await readFile(join(outDir, 'index.html'), 'utf8');
   assert.equal(meta(root, 'og:url'), `${siteUrl}/`);
+});
+
+test('every page shares the landscape card image, with its size and the site name', async () => {
+  const outDir = await built;
+  const pages = ['index.html', ...Object.keys(ARCHETYPES).map((slug) => join('t', slug, 'index.html'))];
+  for (const page of pages) {
+    const html = await readFile(join(outDir, page), 'utf8');
+    assert.equal(meta(html, 'og:image'), `${siteUrl}/public/images/og-card.jpg`, page);
+    assert.equal(meta(html, 'og:image:width'), '1024', page);
+    assert.equal(meta(html, 'og:image:height'), '536', page);
+    assert.equal(meta(html, 'og:site_name'), 'Court Type', page);
+  }
+  assert.ok((await readdir(join(outDir, 'public', 'images'))).includes('og-card.jpg'));
 });
 
 test('no site url placeholder survives the build', async () => {

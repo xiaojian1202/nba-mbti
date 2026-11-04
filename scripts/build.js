@@ -18,6 +18,9 @@ function metaBlock({ title, description, url, image }) {
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${escape(url)}" />
     <meta property="og:image" content="${escape(image)}" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="536" />
+    <meta property="og:site_name" content="Court Type" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${t}" />
     <meta name="twitter:description" content="${d}" />
@@ -57,7 +60,7 @@ export async function build({ siteUrl, outDir, goatcounter, rootDir = repoRoot }
 </html>
 `);
 
-  const image = `${siteUrl}/public/images/hero-basketball.jpg`;
+  const image = `${siteUrl}/public/images/og-card.jpg`;
   const nested = html.replaceAll('href="./', 'href="../../').replaceAll('src="./', 'src="../../');
   for (const [slug, { name, role, tagline }] of Object.entries(ARCHETYPES)) {
     const page = nested.replace(META, () => metaBlock({
