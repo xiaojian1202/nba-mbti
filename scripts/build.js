@@ -35,7 +35,9 @@ export async function build({ siteUrl, outDir, goatcounter, rootDir = repoRoot }
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
-  for (const dir of ['src', 'public']) await cp(join(rootDir, dir), join(outDir, dir), { recursive: true });
+  // *.prompt.txt files are image provenance notes for the repo, not site content.
+  const filter = (path) => !path.endsWith('.prompt.txt');
+  for (const dir of ['src', 'public']) await cp(join(rootDir, dir), join(outDir, dir), { recursive: true, filter });
 
   await writeFile(join(outDir, 'index.html'), html.replaceAll('%SITE_URL%', siteUrl));
 
