@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-04 (`.codex/` added to the gitignored tool artifacts; 2026-11-03: `*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
+Last updated: 2026-11-04 (landing page privacy note under the start button; `.codex/` added to the gitignored tool artifacts; 2026-11-03: `*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
 
 ## Rule: keep this file current
 
@@ -20,7 +20,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 | Command | What it does |
 |---|---|
 | `npm run dev` | `scripts/dev.py`, a no-cache server at http://localhost:5173 |
-| `npm test` | `node --test` (123 tests, all passing as of the date above) |
+| `npm test` | `node --test` (124 tests, all passing as of the date above) |
 | `SITE_URL=https://x npm run build` | Static site in `dist/`, plus one page per archetype at `dist/t/<slug>/`. The build fails if `SITE_URL` is missing. Also writes `dist/404.html`, which redirects to the landing page. Add `GOATCOUNTER=<site code>` to put the GoatCounter script on every page; an invalid code fails the build. |
 | `npm run preview` | Builds `dist/` for `http://localhost:4173` and serves it with Cloudflare Pages routing (`scripts/preview.js`): files as-is, directories via `index.html` with a 308 to the trailing slash, everything else `404.html` with status 404. |
 
@@ -51,6 +51,7 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 - `TYPE_COUNT` is derived from `ARCHETYPES` and never hard-coded.
 - **Analytics (GoatCounter).** `scripts/build.js` adds the script tag before `</head>` only when `GOATCOUNTER` is set; source `index.html` and `npm run dev` never load it (GoatCounter also ignores localhost). The script counts one page view per real page load, and SPA `pushState` changes are not counted, so a shared `/t/<slug>/` landing counts once. `track(path, slug)` in `app.js` sends exactly four events: `quiz_start` (Start/Restart, not resume), `quiz_complete` (title = slug), `share_native` (the share sheet completed) and `share_copy` (the link was copied), both with title = slug. A cancelled sheet or a failed copy sends nothing. These two replaced `share_click` (sent on every press) on 2026-11-02, so dashboard counts before that date are under `share_click`. It is wrapped in try/catch and no-ops when `window.goatcounter` is missing (ad blockers). Never send answers or trait scores. Tests stub `window.goatcounter` via `mount(path, { goatcounter })`.
 - **Sharing.** The result's share button uses `window.navigator.share` when it exists ("Share my type" / "Share this type"), sending `{ title: '<name> — Court Type', text, url }` with the canonical `t/<slug>/` URL built from `siteRoot`, not `location.href`. Fresh results say "I got <name>…"; shared links never claim the result is the visitor's. Cancelling the sheet (`AbortError`) shows nothing; any other share failure, or no native share ("Copy result link" / "Copy link"), copies the URL to the clipboard, and if that fails too the status line says to copy the address bar. Tests stub it via `mount(path, { navigator })` and read the status line from `app.status`.
+- **Privacy note.** The landing hero says answers never leave the browser and only anonymous counts of visits, finished quizzes and shares are kept (no accounts, no cookies). Keep it true: if analytics ever send more, or anything sets a cookie, update the note in the same change.
 - **Quiz progress bar** shows the count of recorded answers and is only set when the quiz renders (Next, Back, resume). Picking an option updates the selection and the Next button, never the bar.
 - **The answer scale** is `role="radiogroup"` with radios, roving tabindex, and arrow/Home/End keys.
 

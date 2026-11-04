@@ -86,6 +86,7 @@ function landing() {
         <p class="hero-intro">Every player brings something different to the court. Find the instincts that make your game yours.</p>
         <button class="primary-button" data-action="start">Find my court type ${arrow}</button>
         ${run ? `<button class="text-button" data-action="resume">Pick up where you left off — question ${run.index + 1} of ${items.length}</button>` : ''}
+        <p class="privacy-note">Your answers never leave this browser. We only keep anonymous counts of visits, finished quizzes and shares. No accounts, no cookies.</p>
       </div><div class="hero-foot shell"><span class="micro-label">SCROLL TO EXPLORE</span><span class="hero-rule"></span></div>
     </section>
     <section class="instincts-section" id="instincts" aria-label="How your type works"><div class="shell">
