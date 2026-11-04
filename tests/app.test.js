@@ -301,6 +301,12 @@ test('the Overview/Instincts nav is hidden mid-quiz so it cannot silently wipe a
   app.cleanup();
 });
 
+test('the landing page says answers stay in the browser', async () => {
+  const app = await mount();
+  assert.match(app.root.innerHTML, /<p class="privacy-note">[^<]*answers never leave this browser/);
+  app.cleanup();
+});
+
 test('the landing and result screens still show the Overview/Instincts nav', async () => {
   const app = await mount();
   assert.ok(app.root.innerHTML.includes('data-action="overview"'));
