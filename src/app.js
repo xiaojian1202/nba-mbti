@@ -166,8 +166,6 @@ function updateScaleSelection() {
     button.setAttribute('aria-checked', String(isSelected));
     button.tabIndex = isTabStop ? 0 : -1;
   });
-  const progress = root.querySelector('.quiz-progress');
-  if (progress) progress.value = Object.keys(state.answers).length;
   const next = root.querySelector('[data-action="next"]');
   if (next) next.disabled = !selected;
 }
