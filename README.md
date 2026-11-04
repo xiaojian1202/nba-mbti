@@ -1,6 +1,6 @@
 # Court Type
 
-**Take the quiz: [courttype.pages.dev](https://courttype.pages.dev)**
+**Take the quiz: [court-type.pages.dev](https://court-type.pages.dev)**
 
 A basketball playing-style quiz with 46 game situations and 45 on-court archetypes. It takes about ten minutes. All scoring happens in the browser; no account or backend is required, and answers are never collected. Anonymous usage counts (page views, quiz starts, completions with the resulting type, and share clicks) are recorded with [GoatCounter](https://www.goatcounter.com), which uses no cookies.
 
