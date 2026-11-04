@@ -57,9 +57,6 @@ async function mount(path = '', { sessionStorage = memoryStorage(), reloadOf, go
     get innerHTML() { return html; },
     set innerHTML(value) { html = value; },
     querySelector(selector) {
-      if (selector === '.quiz-progress') {
-        return { set value(v) { html = html.replace(/(<progress class="quiz-progress" value=")[^"]*/, `$1${v}`); } };
-      }
       if (selector === '[data-action="next"]') {
         return {
           set disabled(v) {
@@ -181,6 +178,7 @@ test('the progress bar reflects answered questions, not the displayed question i
   await app.action('start');
   assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="0"/, 'no answers yet, bar should be empty');
   await app.rate(3);
+  assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="0"/, 'picking an option alone must not move the bar');
   await app.action('next');
   assert.match(app.root.innerHTML, /<progress class="quiz-progress" value="1"/, 'one answer recorded before seeing question 2');
   app.cleanup();
