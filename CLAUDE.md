@@ -2,7 +2,7 @@
 
 Read this first. It sums up the repo so a new conversation or agent can start without re-reading the whole project. Update it when a feature lands, a decision changes, or something breaks in a new way.
 
-Last updated: 2026-11-03 (`*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
+Last updated: 2026-11-04 (`.codex/` added to the gitignored tool artifacts; 2026-11-03: `*.prompt.txt` image provenance notes are kept out of `dist/`; quiz progress bar now moves only on Next, not on picking an option; earlier the same day: trimmed Map and Commands lines that only restated files; rolled the site address back to https://court-type.pages.dev: the move to `courttype.pages.dev` was recorded but never happened. Pages project `court-type` with `SITE_URL=https://court-type.pages.dev`. GoatCounter analytics live, site code `courttype`, set for Production only. Share events are `share_native` / `share_copy` since #17).
 
 ## Rule: keep this file current
 
@@ -96,6 +96,6 @@ Court Type is a basketball playing-style quiz. The user answers 46 Likert items 
 ## Repo conventions
 
 - `AGENTS.md` is a symlink to this file, for agents that read `AGENTS.md` instead of `CLAUDE.md`. Edit `CLAUDE.md` only; never replace the symlink with a copy, because copies drift.
-- Generated skill and tool artifacts stay on disk but are gitignored: `.claude/`, `.impeccable/`, `.superpowers/`, `graphify-out/`, `.worktrees/`, `dist/`. Gitignore any new tool output. `docs/superpowers/{specs,plans}` is the exception and stays tracked.
+- Generated skill and tool artifacts stay on disk but are gitignored: `.claude/`, `.codex/`, `.impeccable/`, `.superpowers/`, `graphify-out/`, `.worktrees/`, `dist/`. Gitignore any new tool output. `docs/superpowers/{specs,plans}` is the exception and stays tracked.
 - Ask before outward-facing git actions: opening or merging PRs, pushing to `main`, deploying.
 - Follow the Karpathy guidelines in the global CLAUDE.md: make surgical changes and keep things simple.
