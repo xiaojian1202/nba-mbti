@@ -4,6 +4,7 @@ node_modules/
 
 # Skill and tooling artifacts: kept on disk, never committed.
 .claude/
+.codex/
 .impeccable/
 .superpowers/
 graphify-out/
