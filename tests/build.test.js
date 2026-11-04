@@ -24,6 +24,13 @@ test('the build emits one page per archetype', async () => {
   for (const slug of Object.keys(ARCHETYPES)) assert.ok(pages.includes(slug), `missing page for ${slug}`);
 });
 
+test('image provenance notes stay in the repo, not on the site', async () => {
+  const outDir = await built;
+  const images = await readdir(join(outDir, 'public', 'images'));
+  assert.ok(images.includes('hero-basketball.jpg'));
+  assert.deepEqual(images.filter((name) => name.endsWith('.prompt.txt')), []);
+});
+
 test('each archetype page carries its own share metadata', async () => {
   const outDir = await built;
   for (const [slug, { name }] of Object.entries(ARCHETYPES)) {
